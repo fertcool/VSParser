@@ -1,0 +1,25 @@
+{
+  "tasks":
+          {
+            "a":false,
+            "b":false,
+            "c":false,
+            "d":true
+          },
+
+  "conf":
+  {
+    "allfiles": true,
+    "filename": "example.txt"
+  },
+
+  "minus":
+          [
+            "//[-]+\n",
+            "//[ -~]*\n"
+          ],
+  "plus":
+          [
+            "//[ -~]*\n"
+          ]
+}
