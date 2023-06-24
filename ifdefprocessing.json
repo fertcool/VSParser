@@ -1,0 +1,22 @@
+{
+  "tasks":
+          {
+            "a": true,
+            "b": false
+          },
+   "conf":
+          {
+            "allfiles": false,
+            "filename": "example.txt"
+          },
+  "includes":
+          [
+            ".\\scr1-master\\src\\includes"
+          ],
+  "defines":
+          [
+            "aaa",
+            "bbb"
+          ]
+
+}
