@@ -31,8 +31,10 @@ def launch():
 
 
 # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
-def addincludes(json, filestr):
-    includes = re.findall(r"`include *\"[\w\.]+\"", filestr)  # поиск всех include в файле
+def addincludes(json, filestr, included = []):
+
+    # поиск всех include в файле (список без повторов)
+    includes = list(set(re.findall(r"`include *\"[\w\.]+\"", filestr)))
 
     # оставл€ем только названи€ включаемых файлов
     for i in range(len(includes)):
@@ -47,12 +49,18 @@ def addincludes(json, filestr):
         for includepath in json["includes"]:
 
             # если файл в текущей директоии есть, то добавл€ем текст включаемого файла
-            if os.path.exists(includepath+"\\"+include):
+            if os.path.exists(includepath+"\\"+include) and include not in included:
                 existfile = True
                 includetextopen = open(includepath+"\\"+include, "r")
                 includetext = includetextopen.read()
-                filestr = re.sub("`include *\""+include+"\"", includetext, filestr)
+                filestr = re.sub("`include *\""+include+"\"", includetext, filestr, 1)
+
+                # удаление повтор€ющихс€ включений
+                filestr = re.sub("`include *\"" + include + "\"", '', filestr)
                 includetextopen.close()
+
+                included.append(include)
+                print(include)
                 # includetextopen = open(includepath + "\\" + include, "w")
                 # includetextopen.write(filestr)
                 # includetextopen.close()
@@ -62,7 +70,7 @@ def addincludes(json, filestr):
         if not existfile:
 
             # добавл€ем пометку
-            filestr = re.sub("`include *\"" + include + "\"", "//`include \"" + include + "\" //file don't exist", filestr)
+            filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" //file don't exist", filestr)
 
             # убираем включаемый файл из списка
             includes.remove(include)
@@ -70,7 +78,7 @@ def addincludes(json, filestr):
 
     # если хот€бы 1 файл был добавлен, включаем и его файлы
     if len(includes) != 0:
-        filestr = addincludes(json, filestr)
+        filestr = addincludes(json, filestr, included)
 
     return filestr
 
