@@ -6,8 +6,8 @@
           },
    "conf":
           {
-            "allfiles": false,
-            "filename": "example.txt"
+            "allfiles": true,
+            "filename": "h.sv"
           },
   "includes":
           [

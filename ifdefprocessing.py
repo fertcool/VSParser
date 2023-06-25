@@ -2,6 +2,7 @@ import json
 import os
 import re
 import scanfiles
+import erase_comments
 
 #ф-я запускающая препроцессинг sv файлов
 def launch():
@@ -53,8 +54,13 @@ def launch():
                 for ifdef in ifdefs:
 
                     index = filestr.find(ifdef)
-                    textbefore = filestr[:index] # текст до блока
-                    defineswithcom = re.findall(r"// *`define +\w+\n", textbefore)
+                    textbefore = filestr[:index]  # текст до блока
+
+                    #  удаляем комментарии с определениями
+                    fileopen.close()
+                    erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
+                    fileopen = open(file, "r")
+
                     defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
 
                     # оставляем только названия define
@@ -62,12 +68,12 @@ def launch():
                         defines[i] = re.sub("`define +", '', defines[i])
                         defines[i] = re.sub("\n", '', defines[i])
 
-                    # проверка есть ли закомментированные define в defines
-                    # соответственно убираем их
-                    for define in defines:
-                        for definecom in defineswithcom:
-                            if define in definecom:
-                                defines.remove(define)
+                    # # проверка есть ли закомментированные define в defines
+                    # # соответственно убираем их
+                    # for define in defines:
+                    #     for definecom in defineswithcom:
+                    #         if define in definecom:
+                    #             defines.remove(define)
 
                     # обработка блока
                     newifdef = ifblockprocessing(ifdef, defines)
