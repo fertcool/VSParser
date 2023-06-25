@@ -31,10 +31,13 @@ def launch():
 
 
 # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
-def addincludes(json, filestr, included = []):
+def addincludes(json, filestr, included = None):
 
-    # поиск всех include в файле (список без повторов)
-    includes = list(set(re.findall(r"`include *\"[\w\.]+\"", filestr)))
+    if included is None:
+        included = []
+
+    # поиск всех include в файле (расположенных последовательно)
+    includes = re.findall(r"`include *\"[\w\.]+\"", filestr)
 
     # оставл€ем только названи€ включаемых файлов
     for i in range(len(includes)):
@@ -48,37 +51,40 @@ def addincludes(json, filestr, included = []):
         # цикл по всем директори€м, где должны хранитс€ include файлы
         for includepath in json["includes"]:
 
-            # если файл в текущей директоии есть, то добавл€ем текст включаемого файла
+            # если файл в текущей директоии есть (и он еще не был включен)
+            # , то добавл€ем текст включаемого файла
             if os.path.exists(includepath+"\\"+include) and include not in included:
                 existfile = True
                 includetextopen = open(includepath+"\\"+include, "r")
                 includetext = includetextopen.read()
+
+                # вставл€ем в файл на место 1 включени€
                 filestr = re.sub("`include *\""+include+"\"", includetext, filestr, 1)
 
                 # удаление повтор€ющихс€ включений
-                filestr = re.sub("`include *\"" + include + "\"", '', filestr)
+                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
+                                 filestr)
                 includetextopen.close()
 
+                # добавл€ем вставленный файл в список включенных
                 included.append(include)
-                print(include)
-                # includetextopen = open(includepath + "\\" + include, "w")
-                # includetextopen.write(filestr)
-                # includetextopen.close()
+
+                # заново просматриваем файл (ищем снова включени€)
+                filestr = addincludes(json, filestr, included)
+
+                # выходим, т.к. уже нащли и вставили файл
                 break
 
         # если включаемый файл не был найден, то оставл€ем соответствующую пометку и идем к следующему файлу
         if not existfile:
 
             # добавл€ем пометку
-            filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" //file don't exist", filestr)
-
-            # убираем включаемый файл из списка
-            includes.remove(include)
+            if include not in included: # если файл не был включен
+                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist", filestr)
+            else: # если файл был включен
+                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
+                                 filestr)
             continue
-
-    # если хот€бы 1 файл был добавлен, включаем и его файлы
-    if len(includes) != 0:
-        filestr = addincludes(json, filestr, included)
 
     return filestr
 
