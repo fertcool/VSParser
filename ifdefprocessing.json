@@ -1,12 +1,12 @@
 {
   "tasks":
           {
-            "a": true,
-            "b": false
+            "a": false,
+            "b": true
           },
    "conf":
           {
-            "allfiles": true,
+            "allfiles": false,
             "filename": "example.txt"
           },
   "includes":

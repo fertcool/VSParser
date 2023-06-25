@@ -30,6 +30,122 @@ def launch():
             fileopen.write(filestr)  # запись нового текста в файл
 
 
+    if json_struct["tasks"]["b"]:
+        # цикл по всем файлам
+        for file in files:
+            fileopen = open(file, "r")  # открытие файла
+            filestr = fileopen.read()
+
+            # цикл пока есть блоки ifdef или ifndef в файле
+            while(re.search(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filestr)):
+
+                # поиск всех блоков ifdef/ifndef (возможно с вложениями)
+                ifdefs = re.findall(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filestr)
+
+                # убираем вложения, если они есть (например ifdef...ifdef...endif -> ifdef...endif)
+                for i in range(len(ifdefs)):
+                    ifs = re.findall(r"`(?:ifndef|ifdef) +\w+", ifdefs[i])
+                    if len(ifs)>1:
+                        ifdefs[i] = re.search(r"[\s|\S]"+ifs[len(ifs)-1]+r"[\s|\S]*?`endif", ifdefs[i])[0]
+                        ifdefs[i] = ifdefs[i][1:]
+
+                # цикл по каждому блоку
+                for ifdef in ifdefs:
+
+                    index = filestr.find(ifdef)
+                    textbefore = filestr[:index] # текст до блока
+                    defineswithcom = re.findall(r"// *`define +\w+\n", textbefore)
+                    defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
+
+                    # оставляем только названия define
+                    for i in range(len(defines)):
+                        defines[i] = re.sub("`define +", '', defines[i])
+                        defines[i] = re.sub("\n", '', defines[i])
+
+                    # проверка есть ли закомментированные define в defines
+                    # соответственно убираем их
+                    for define in defines:
+                        for definecom in defineswithcom:
+                            if define in definecom:
+                                defines.remove(define)
+
+                    # обработка блока
+                    newifdef = ifblockprocessing(ifdef, defines)
+
+                    filestr = filestr.replace(ifdef, newifdef)
+
+            # запись в файл кода без лишних блоков ifdef/ifndef
+            fileopen.close()
+            fileopen = open(file, "w")
+
+            fileopen.write(filestr)
+            fileopen.close()
+
+# ф-я проверяющая 1 блок ifdef/ifndef
+def ifblockprocessing(blockstr, defines):
+
+    # списки условных деректив блока
+    ifdef = re.search(r"`(?:ifndef|ifdef) +\w+\n", blockstr)[0]
+    elsifs = re.findall(r"`elsif +\w+\n", blockstr)
+    else_ = re.search(r"`else", blockstr)
+
+    if else_ != None:
+        else_ = else_[0]
+
+    # сравниваем ifdef/ifndef с define
+    for define in defines:
+        if define in ifdef:
+            # если нашли совпадение с define и мы обрабатываем ifdef, то возвращаем код блока
+            if "ifdef" in ifdef:
+                blockstr = cleanblock(blockstr, ifdef)
+                return blockstr
+            # если нашли совпадение с define и мы обрабатываем ifndef
+            else:
+                return ""  # возращаем пустоту (т.е. блок ifndef удалится)
+
+    # если совпадений с define не было найдено и мы обрабатываем ifndef, то
+    # возращаем код блока
+    if "ifndef" in ifdef:
+        blockstr = cleanblock(blockstr, ifdef)
+        return blockstr
+
+    # сравниваем elsif с define
+    for define in defines:
+        for elsif in elsifs:
+            if define in elsif:
+                # если нашли совпадение, то возвращаем код блока elsif
+                blockstr = cleanblock(blockstr, elsif)
+                return blockstr
+
+    # отдаем блок с else
+    if else_:
+        blockstr = cleanblock(blockstr, else_)
+        return blockstr
+
+    # если не нашли никаких совпадений, возвращаем пустоту
+    return ""
+
+# ф-я возвращающая внутренний код блока
+def cleanblock(block, face):
+    blockwithface = re.search(face + r"[\s|\S]*?`elsif", block)
+    if blockwithface != None:  # если блок с elsif концом
+        blockwithface = blockwithface[0]
+        blockwithface = re.sub(face, '', blockwithface)
+        blockwithface = re.sub("`elsif", '', blockwithface)
+    else:
+        blockwithface = re.search(face + r"[\s|\S]*?`else", block)
+        if blockwithface != None:  # если блок с else концом
+            blockwithface = blockwithface[0]
+            blockwithface = re.sub(face, '', blockwithface)
+            blockwithface = re.sub("`else", '', blockwithface)
+        else: # если блок с endif концом
+            blockwithface = re.search(face + r"[\s|\S]*?`endif", block)
+            blockwithface = blockwithface[0]
+            blockwithface = re.sub(face, '', blockwithface)
+            blockwithface = re.sub("`endif", '', blockwithface)
+
+    return blockwithface
+
 # ф-я добавляющая в текст sv файла include файлы (в том числе включая include включаемого файла)
 def addincludes(json, filestr, included = None):
 
@@ -81,7 +197,7 @@ def addincludes(json, filestr, included = None):
             # добавляем пометку
             if include not in included: # если файл не был включен
                 filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist", filestr)
-            else: # если файл был включен
+            else:  # если файл был включен
                 filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
                                  filestr)
             continue
