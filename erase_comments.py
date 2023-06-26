@@ -66,7 +66,7 @@ def delete(svfile, patterns, plus):
 
         # цикл по каждому комментарию
         for com in comments:
-            match = False # флаг совпадения с положительным шаблоном
+            match = False  # флаг совпадения с положительным шаблоном
 
             # поиск совпадения
             for pluspattern in patterns:
@@ -79,7 +79,6 @@ def delete(svfile, patterns, plus):
 
     # если работаем с minus списком
     else:
-
         # ищем удаляемые комментарии
         for pattern in patterns:
             if re.findall(pattern, svtext):

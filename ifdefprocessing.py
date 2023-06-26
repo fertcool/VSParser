@@ -4,7 +4,7 @@ import re
 import scanfiles
 import erase_comments
 
-#ф-я запускающая препроцессинг sv файлов
+# ф-я запускающая препроцессинг sv файлов
 def launch():
     json_file = open(r"ifdefprocessing.json", "r")
     json_struct = json.load(json_file)
@@ -34,6 +34,10 @@ def launch():
     if json_struct["tasks"]["b"]:
         # цикл по всем файлам
         for file in files:
+
+            #  удаляем комментарии с определениями
+            erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
+
             fileopen = open(file, "r")  # открытие файла
             filestr = fileopen.read()
 
@@ -55,11 +59,6 @@ def launch():
 
                     index = filestr.find(ifdef)
                     textbefore = filestr[:index]  # текст до блока
-
-                    #  удаляем комментарии с определениями
-                    fileopen.close()
-                    erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
-                    fileopen = open(file, "r")
 
                     defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
 
@@ -98,7 +97,7 @@ def ifblockprocessing(blockstr, defines):
     if else_ != None:
         else_ = else_[0]
 
-    # сравниваем ifdef/ifndef с define
+    # сравниваем макросы ifdef/ifndef с define
     for define in defines:
         if define in ifdef:
             # если нашли совпадение с define и мы обрабатываем ifdef, то возвращаем код блока
