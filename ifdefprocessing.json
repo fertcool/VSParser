@@ -1,8 +1,10 @@
 {
   "tasks":
           {
-            "a": true,
-            "b": true
+             "a":false,
+             "b":false,
+             "c":false,
+             "d":true
           },
    "conf":
           {

@@ -75,17 +75,17 @@ def delete(svfile, patterns, plus):
 
             # если совпадений нет то удаляем комментарий
             if not match:
-               svtext = svtext.replace(com, '')
+               svtext = svtext.replace(com, '\n')
 
     # если работаем с minus списком
     else:
         # ищем удаляемые комментарии
         for pattern in patterns:
             if re.findall(pattern, svtext):
-                print(re.findall(pattern, svtext))
+                # print(re.findall(pattern, svtext))
 
                 # удаляем комментарий, совпавший с шаблоном
-                svtext = re.sub(pattern, '', svtext)
+                svtext = re.sub(pattern, '\n', svtext)
     file.close()
     file = open(svfile, "w")
 

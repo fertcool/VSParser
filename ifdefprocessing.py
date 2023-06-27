@@ -61,18 +61,11 @@ def launch():
                     textbefore = filestr[:index]  # текст до блока
 
                     defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
-
+                    defines.extend(json_struct["defines"])  # добавляем внешние define
                     # оставляем только названия define
                     for i in range(len(defines)):
                         defines[i] = re.sub("`define +", '', defines[i])
                         defines[i] = re.sub("\n", '', defines[i])
-
-                    # # проверка есть ли закомментированные define в defines
-                    # # соответственно убираем их
-                    # for define in defines:
-                    #     for definecom in defineswithcom:
-                    #         if define in definecom:
-                    #             defines.remove(define)
 
                     # обработка блока
                     newifdef = ifblockprocessing(ifdef, defines)
