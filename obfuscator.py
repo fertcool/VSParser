@@ -6,6 +6,7 @@ import scanfiles
 import os
 import erase_comments
 import ifdefprocessing
+import string
 
 # обфускация производится над индентификаторами:
 # input / output / inout
@@ -37,8 +38,6 @@ def launch():
         # цикл по всем файлам
         for file in files:
 
-
-
             json_file_ifdef = open("ifdefprocessing.json", "r")
             json_ifdef_struct = json.load(json_file_ifdef)
 
@@ -51,18 +50,20 @@ def launch():
             erase_comments.delete(file, ["/\*[\s|\S]*?\*/", "//[^\n]*\n"], False)
 
             fileopen = open(file, "r")  # открытие файла
-            filestr = fileopen.read()
+            filetext = fileopen.read()
+            fileopen.close()
 
-            defines = re.findall(r"`define +(\w+)", filestr)
+            defines = re.findall(r"`define +(\w+)", filetext)
             print("defines = ", defines)
             # список строк с определением или инициализацией индентификаторов
             # в группе хранятся списки индентификаторов
             base = []
-            baseindentif = re.findall(r"[^ \w] *(?:input|output|inout|wire|reg|"
-                                      r"parameter|localparam|byte|shortint|"
-                                      r"int|integer|longint|bit|logic|shortreal|"
-                                      r"real|realtime|time|event"
-                                      r") +([\w,; \[\]`:-]*?[\n)=])", filestr)
+            baseindentif = re.findall("(?:input|output|inout|wire|reg|"
+                                      "parameter|localparam|byte|shortint|"
+                                      "int|integer|longint|bit|logic|shortreal|"
+                                      "real|realtime|time|event"
+                                      ") +([\w|\W]*?[,;\n)=])", filetext)
+            print(baseindentif)
             for i in range(len(baseindentif)):
                 base += re.findall(r"(\w+) *[,;\n)=]", baseindentif[i])
             print("base = ", base)
@@ -70,38 +71,87 @@ def launch():
             # список строк с блоками enums
             # в 1 группе хранится текст внутри блока
             # во 2 группе хранятся индентификаторы enums
-            enumblocks = re.findall(r"enum[\w,; \[\]`:-]+\{([\w|\W]+?)} *([\w,; \[\]`:-]+)", filestr)
+            enumblocks = re.findall(r"enum[\w,; \[\]`:-]+\{([\w|\W]+?)} *([\w,; \[\]`:-]+)", filetext)
             enums = []
             # цикл обработки enums (выделения индентификаторов из текстов enums)
             for i in range(len(enumblocks)):
-
                 insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # текст внтури блока без присваиваний
-
                 insideind = re.findall(r"(\w+) *", insideWOeq)  # список индентификаторов внутри блока
                 outsideind = re.findall(r"(\w+) *", enumblocks[i][1])  # список индентификаторов снаружи блока (объекты enum)
                 enumblocks[i] = (insideind+outsideind)
                 enums += enumblocks[i]  # в итоге делаем список всех индентификаторов связанных с блоками enum
             print("enums = ", enums)
 
-            structs = re.findall(r"struct[\w|\W]+?(\w+);", filestr)
+            structs = re.findall(r"struct[\w|\W]+?(\w+);", filetext)
             print("structs =", structs)
 
-            typedefs = re.findall(r"typedef[\w|\W]+?(\w+);", filestr)
+            typedefs = re.findall(r"typedef[\w|\W]+?(\w+);", filetext)
 
-            for a in structs+enums:
+            for a in structs:
                 if a in typedefs:
-                    typedefs.remove(a)
+                    structs.remove(a)
+            for a in enums:
+                if a in typedefs:
+                    enums.remove(a)
             print("typedefs = ", typedefs)
 
-            ModuleClusses = re.findall(r"(?:module|task|function|class) +(\w+)", filestr)
+            # поиск индентификаторов, типа typedef'ов
+
+            for typedef in typedefs:
+                base_typedef = re.findall(typedef+r" +([\w|\W]*?[,;\n)=])", filetext)
+                for i in range(len(base_typedef)):
+                    base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])
+                    print(re.findall(r"(\w+) *[,;\n)=]", base_typedef[i]))
+
+            ModuleClusses = re.findall(r"(?:module|task|function|class) +(\w+)", filetext)
             print("ModuleClasses = ", ModuleClusses)
 
             allind = defines+base+enums+structs+typedefs+ModuleClusses
 
-def encrypt(allind, filetext):
-    return filetext
-def decrypt(decr_table, filetext):
-    return filetext
+            encrypt_table = encrypt(allind, file)
+
+            print(encrypt_table)
+
+
+
+def encrypt(allind, file):
+    fileopen = open(file, "r")
+    filetext = fileopen.read()
+    fileopen.close()
+
+    encrypt_table = {}
+    for ind in allind:
+        randlength = random.randint(8, 32)
+        letters_and_digits = string.ascii_letters + string.digits
+        rand_string = ''.join(random.sample(letters_and_digits, randlength))
+
+        encrypt_table[rand_string] = ind
+
+
+        pattern1 = r'(\W)' + ind + r'(\W)'
+        pattern2 = r'\1' + rand_string + r'\2'
+
+        indefic = set(re.findall(r'\W' + ind + r'\W', filetext))
+
+        for indef in indefic:
+            first = indef[0]
+            last = indef[len(indef)-1]
+
+            indef = indef.replace("(", r"\(")
+            indef = indef.replace(")", r"\)")
+
+            filetext = re.sub(indef, first + rand_string + last, filetext)
+
+        # filetext = re.sub(pattern1, pattern2, filetext)
+
+    fileopen = open(file, "w")
+    fileopen.write(filetext)
+    fileopen.close()
+
+    return encrypt_table
+    
+def decrypt(decr_table, file):
+    return file
     # file = open("eee.txt", "w")
     # d = {"ddd": "dd", "dsds": "dsds"}
     # string= str(d)

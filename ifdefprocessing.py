@@ -29,13 +29,13 @@ def launch():
             ifdef_pr_forfile(file, json_struct)
 
     # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
-    def addincludes(json, filestr, included=None):
+    def addincludes(json, filetext, included=None):
 
         if included is None:
             included = []
 
         # поиск всех include в файле (расположенных последовательно)
-        includes = re.findall(r"`include *\"[\w\.]+\"", filestr)
+        includes = re.findall(r"`include *\"[\w\.]+\"", filetext)
 
         # оставл€ем только названи€ включаемых файлов
         for i in range(len(includes)):
@@ -57,19 +57,19 @@ def launch():
                     includetext = includetextopen.read()
 
                     # вставл€ем в файл на место 1 включени€
-                    filestr = re.sub("`include *\"" + include + "\"", includetext, filestr, 1)
+                    filetext = re.sub("`include *\"" + include + "\"", includetext, filetext, 1)
 
                     # удаление повтор€ющихс€ включений
-                    filestr = re.sub("`include *\"" + include + "\"",
+                    filetext = re.sub("`include *\"" + include + "\"",
                                      "//include \"" + include + "\" file already include",
-                                     filestr)
+                                     filetext)
                     includetextopen.close()
 
                     # добавл€ем вставленный файл в список включенных
                     included.append(include)
 
                     # заново просматриваем файл (ищем снова включени€)
-                    filestr = addincludes(json, filestr, included)
+                    filetext = addincludes(json, filetext, included)
 
                     # выходим, т.к. уже нащли и вставили файл
                     break
@@ -79,25 +79,25 @@ def launch():
 
                 # добавл€ем пометку
                 if include not in included:  # если файл не был включен
-                    filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist",
-                                     filestr)
+                    filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist",
+                                     filetext)
                 else:  # если файл был включен
-                    filestr = re.sub("`include *\"" + include + "\"",
+                    filetext = re.sub("`include *\"" + include + "\"",
                                      "//include \"" + include + "\" file already include",
-                                     filestr)
+                                     filetext)
                 continue
 
-        return filestr
+        return filetext
 
 
 # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
-def addincludes(json, filestr, included = None):
+def addincludes(json, filetext, included = None):
 
     if included is None:
         included = []
 
     # поиск всех include в файле (расположенных последовательно)
-    includes = re.findall(r"`include *\"[\w\.]+\"", filestr)
+    includes = re.findall(r"`include *\"[\w\.]+\"", filetext)
 
     # оставл€ем только названи€ включаемых файлов
     for i in range(len(includes)):
@@ -119,18 +119,18 @@ def addincludes(json, filestr, included = None):
                 includetext = includetextopen.read()
 
                 # вставл€ем в файл на место 1 включени€
-                filestr = re.sub("`include *\""+include+"\"", includetext, filestr, 1)
+                filetext = re.sub("`include *\""+include+"\"", includetext, filetext, 1)
 
                 # удаление повтор€ющихс€ включений
-                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
-                                 filestr)
+                filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
+                                 filetext)
                 includetextopen.close()
 
                 # добавл€ем вставленный файл в список включенных
                 included.append(include)
 
                 # заново просматриваем файл (ищем снова включени€)
-                filestr = addincludes(json, filestr, included)
+                filetext = addincludes(json, filetext, included)
 
                 # выходим, т.к. уже нащли и вставили файл
                 break
@@ -140,26 +140,26 @@ def addincludes(json, filestr, included = None):
 
             # добавл€ем пометку
             if include not in included: # если файл не был включен
-                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist", filestr)
+                filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist", filetext)
             else:  # если файл был включен
-                filestr = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
-                                 filestr)
+                filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
+                                 filetext)
             continue
 
-    return filestr
+    return filetext
 
 
 # ф-€ добавлени€ всех include файлов дл€ 1 файла
 def include_for_file(file, json):
     fileopen = open(file, "r")  # открытие файла
-    filestr = fileopen.read()
+    filetext = fileopen.read()
 
     # измен€ем текст sv файла - замен€ем `include на текст соответствующего файла
-    filestr = addincludes(json, filestr)
+    filetext = addincludes(json, filetext)
 
     fileopen.close()  # закрытие файла
     fileopen = open(file, "w")
-    fileopen.write(filestr)  # запись нового текста в файл
+    fileopen.write(filetext)  # запись нового текста в файл
     fileopen.close()
 
 def ifdef_pr_forfile(file, json):
@@ -167,13 +167,13 @@ def ifdef_pr_forfile(file, json):
     erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
 
     fileopen = open(file, "r")  # открытие файла
-    filestr = fileopen.read()
+    filetext = fileopen.read()
 
     # цикл пока есть блоки ifdef или ifndef в файле
-    while (re.search(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filestr)):
+    while (re.search(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filetext)):
 
         # поиск всех блоков ifdef/ifndef (возможно с вложени€ми)
-        ifdefs = re.findall(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filestr)
+        ifdefs = re.findall(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filetext)
 
         # убираем вложени€, если они есть (например ifdef...ifdef...endif -> ifdef...endif)
         for i in range(len(ifdefs)):
@@ -185,8 +185,8 @@ def ifdef_pr_forfile(file, json):
         # цикл по каждому блоку
         for ifdef in ifdefs:
 
-            index = filestr.find(ifdef)
-            textbefore = filestr[:index]  # текст до блока
+            index = filetext.find(ifdef)
+            textbefore = filetext[:index]  # текст до блока
 
             defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
             defines.extend(json["defines"])  # добавл€ем внешние define
@@ -198,13 +198,13 @@ def ifdef_pr_forfile(file, json):
             # обработка блока
             newifdef = ifblockprocessing(ifdef, defines)
 
-            filestr = filestr.replace(ifdef, newifdef)
+            filetext = filetext.replace(ifdef, newifdef)
 
     # запись в файл кода без лишних блоков ifdef/ifndef
     fileopen.close()
     fileopen = open(file, "w")
 
-    fileopen.write(filestr)
+    fileopen.write(filetext)
     fileopen.close()
 
 
