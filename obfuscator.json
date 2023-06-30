@@ -8,7 +8,7 @@
           },
    "conf":
           {
-            "allfiles": false,
+            "allfiles": true,
             "filename": "h.sv"
           },
   "literalclass": "parameter",
