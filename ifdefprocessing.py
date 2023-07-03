@@ -28,67 +28,6 @@ def launch():
         for file in files:
             ifdef_pr_forfile(file, json_struct)
 
-    # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
-    def addincludes(json, filetext, included=None):
-
-        if included is None:
-            included = []
-
-        # поиск всех include в файле (расположенных последовательно)
-        includes = re.findall(r"`include *\"[\w\.]+\"", filetext)
-
-        # оставл€ем только названи€ включаемых файлов
-        for i in range(len(includes)):
-            includes[i] = re.sub("`include +", '', includes[i])
-            includes[i] = re.sub("\"", '', includes[i])
-
-        # цикл по всем включаемым файлам
-        for include in includes:
-            existfile = False  # флаг существовани€ включаемого файла
-
-            # цикл по всем директори€м, где должны хранитс€ include файлы
-            for includepath in json["includes"]:
-
-                # если файл в текущей директоии есть (и он еще не был включен)
-                # , то добавл€ем текст включаемого файла
-                if os.path.exists(includepath + "\\" + include) and include not in included:
-                    existfile = True
-                    includetextopen = open(includepath + "\\" + include, "r")
-                    includetext = includetextopen.read()
-
-                    # вставл€ем в файл на место 1 включени€
-                    filetext = re.sub("`include *\"" + include + "\"", includetext, filetext, 1)
-
-                    # удаление повтор€ющихс€ включений
-                    filetext = re.sub("`include *\"" + include + "\"",
-                                     "//include \"" + include + "\" file already include",
-                                     filetext)
-                    includetextopen.close()
-
-                    # добавл€ем вставленный файл в список включенных
-                    included.append(include)
-
-                    # заново просматриваем файл (ищем снова включени€)
-                    filetext = addincludes(json, filetext, included)
-
-                    # выходим, т.к. уже нащли и вставили файл
-                    break
-
-            # если включаемый файл не был найден, то оставл€ем соответствующую пометку и идем к следующему файлу
-            if not existfile:
-
-                # добавл€ем пометку
-                if include not in included:  # если файл не был включен
-                    filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist",
-                                     filetext)
-                else:  # если файл был включен
-                    filetext = re.sub("`include *\"" + include + "\"",
-                                     "//include \"" + include + "\" file already include",
-                                     filetext)
-                continue
-
-        return filetext
-
 
 # ф-€ добавл€юща€ в текст sv файла include файлы (в том числе включа€ include включаемого файла)
 def addincludes(json, filetext, included = None):
@@ -132,7 +71,7 @@ def addincludes(json, filetext, included = None):
                 # заново просматриваем файл (ищем снова включени€)
                 filetext = addincludes(json, filetext, included)
 
-                # выходим, т.к. уже нащли и вставили файл
+                # выходим, т.к. уже нашли и вставили файл
                 break
 
         # если включаемый файл не был найден, то оставл€ем соответствующую пометку и идем к следующему файлу
@@ -204,6 +143,9 @@ def ifdef_pr_forfile(file, json):
     fileopen.close()
     fileopen = open(file, "w")
 
+    # убираем лишние отступы
+    filetext = re.sub(r"\n{3,}", "\n\n", filetext)
+
     fileopen.write(filetext)
     fileopen.close()
 
@@ -266,7 +208,7 @@ def cleanblock(block, face):
             blockwithface = blockwithface[0]
             blockwithface = re.sub(face, '', blockwithface)
             blockwithface = re.sub("`else", '', blockwithface)
-        else: # если блок с endif концом
+        else:  # если блок с endif концом
             blockwithface = re.search(face + r"[\s|\S]*?`endif", block)
             blockwithface = blockwithface[0]
             blockwithface = re.sub(face, '', blockwithface)

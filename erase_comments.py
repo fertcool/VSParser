@@ -89,6 +89,9 @@ def delete(svfile, patterns, plus):
     file.close()
     file = open(svfile, "w")
 
+    # убираем лишние отступы
+    svtext = re.sub(r"\n{3,}", "\n\n", svtext)
+
     # запись в файл текста кода без комментариев
     file.write(svtext)
     file.close()

@@ -2,8 +2,8 @@
   "tasks":
           {
              "a":false,
-             "b":true,
-             "c":false,
+             "b":false,
+             "c":true,
              "d":false
           },
    "conf":
@@ -13,5 +13,5 @@
           },
   "literalclass": "input/output/inout",
 
-  "module": "scr1_timer"
+  "module": "scr1_reset_buf_cell"
 }

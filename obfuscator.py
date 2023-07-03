@@ -1,15 +1,3 @@
-import ast
-import json
-import os
-import random
-import re
-import string
-
-import erase_comments
-import ifdefprocessing
-import scanfiles
-
-
 # обфускация производится над индентификаторами:
 # input / output / inout
 # wire / reg
@@ -21,6 +9,18 @@ import scanfiles
 # event
 # enum / typedef / class
 # `define
+
+import ast
+import json
+import os
+import random
+import re
+import string
+
+import erase_comments
+import ifdefprocessing
+import scanfiles
+
 
 # запуск обфускации
 def launch():
@@ -46,6 +46,12 @@ def launch():
         for file in files:
             ind_search_and_raplace(file, json_struct["literalclass"])
 
+    if json_struct["tasks"]["c"]:
+
+        # цикл по всем файлам
+        for file in files:
+            module_search_and_raplace_WOinout(file, json_struct["module"])
+
 
 # ф-я обработки ifdef/ifndef и удаления окмментариев
 def preobfuscator(file):
@@ -60,8 +66,119 @@ def preobfuscator(file):
     #  удаляем комментарии
     erase_comments.delete(file, ["/\*[\s|\S]*?\*/", "//[^\n]*\n"], False)
 
+# ф-я поиска и замены любых индентификаторов, кроме input/output/inout в заданном модуле
+def module_search_and_raplace_WOinout(file, module):
 
-# ф-я поиска и замены выбранного вида индентификаторов
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()  # текст всего файла
+    fileopen.close()
+
+    moduleblock = re.search(r"module +"+module+r"[\w|\W]+?endmodule *: *"+module+r"[.\n]", filetext)
+
+    if moduleblock != None:
+
+        # обработка ifdef/ifndef
+        preobfuscator(file)
+
+        fileopen = open(file, "r")  # открытие файла
+        filetext = fileopen.read()  # текст всего файла
+        fileopen.close()
+
+        moduletext = moduleblock[0]  # текст блока модуля
+
+        fileopen = open(file, "w")  # открытие файла
+        fileopen.write(moduletext)
+        fileopen.close()
+
+        inouts = []  # список всех input/output/inout индентификаторов
+
+        # поиск всех input/output/inout индентификаторов
+        inouts_strs = re.findall(r"(?:input|output|inout) +([\w|\W]*?[,;\n)=])", moduletext)
+
+        # выделение самих индентификаторов из списка inouts_strs
+        for i in range(len(inouts_strs)):
+            inouts += re.findall(r"(\w+) *[,;\n)=]", inouts_strs[i])
+
+            # выделение индентификаторов, у которпых в конце [\d:\d]
+            inouts += re.findall(r"(\w+) +\[[\d :]+][,;\n]", inouts_strs[i])
+
+        defines = re.findall(r"`define +(\w+)", moduletext)  # список индентификаторов define
+
+        # список строк с определением или инициализацией базовых индентификаторов
+        # в группе хранятся списки индентификаторов
+        base = []
+        baseindentif = re.findall(
+            "(?:wire|reg|"  # список строк с информацией после типа индентификатора
+            "parameter|localparam|byte|shortint|"
+            "int|integer|longint|bit|logic|shortreal|"
+            "real|realtime|time|event"
+            ") +([\w|\W]*?[,;\n)=])", moduletext)
+
+        # выделение самих индентификаторов из списка baseindentif
+        for i in range(len(baseindentif)):
+            base += re.findall(r"(\w+) *[,;\n)=]", baseindentif[i])
+
+            # выделение индентификаторов, у которпых в конце [\d:\d]
+            base += re.findall(r"(\w+) +\[[\d :]+][,;\n]", baseindentif[i])
+
+        # список строк с блоками enums
+        # в 1 группе хранится текст внутри блока
+        # во 2 группе хранятся индентификаторы enums
+        enumblocks = re.findall(r"enum[\w,; \[\]`:-]+\{([\w|\W]+?)} *([\w,; \[\]`:-]+)", moduletext)
+        enums = []  # список индентифиакторов внутри блока enums и самих индентификатров определяемых enums
+        # цикл обработки enums (выделения индентификаторов из текстов enums)
+        for i in range(len(enumblocks)):
+            insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # текст внтури блока без присваиваний
+            insideind = re.findall(r"(\w+) *", insideWOeq)  # список индентификаторов внутри блока
+            outsideind = re.findall(r"(\w+) *",
+                                    enumblocks[i][1])  # список индентификаторов снаружи блока (объекты enum)
+            enumblocks[i] = (insideind + outsideind)
+            enums += enumblocks[i]  # в итоге делаем список всех индентификаторов связанных с блоками enum
+
+        structs = re.findall(r"struct[\w|\W]+?} *(\w+);", moduletext)  # список индентификаторов struct
+
+        typedefs = re.findall(r"typedef[\w|\W]+?} *(\w+);", moduletext)  # список индентификаторов typedef
+
+        # удаление повторных индентификаторов typedef из enums и struct
+        for a in structs:
+            if a in typedefs:
+                structs.remove(a)
+        for a in enums:
+            if a in typedefs:
+                enums.remove(a)
+
+        # поиск индентификаторов, типа typedef'ов
+        for typedef in typedefs:
+            base_typedef = re.findall(typedef + r" +([\w|\W]*?[,;\n)=])", moduletext)
+            for i in range(len(base_typedef)):
+                base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных индентификаторов в base
+
+        # поиск индентификаторов модулей и классов
+        module_ind = re.findall(r"(?:module|function)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", moduletext)
+
+        # все индентификаторы (без повторов)
+        allind = set(defines + base + enums + structs + typedefs + module_ind)  # все индентификаторы
+
+        # удаление из списка allind найденных input/output/inout индентификаторов
+        for i in range(len(inouts)):
+            allind.remove(inouts[i])
+
+        # шифровка индентификаторов и создание таблицы соответствия
+        encrypt(allind, file)
+
+        fileopen = open(file, "r")  # открытие файла
+        newmoduletext = fileopen.read()
+        fileopen.close()
+
+        fileopen = open(file, "w")  # открытие файла
+        fileopen.write(filetext.replace(moduletext, newmoduletext))
+        fileopen.close()
+    else:
+        print("module not found")
+        return
+
+
+# ф-я поиска и замены выбранного вида индентификаторов (input/output/inout, wire, reg, module, instance, parameter)
 def ind_search_and_raplace(file, ind):
 
     # обработка ifdef/ifndef
@@ -101,9 +218,6 @@ def ind_search_and_raplace(file, ind):
 
     # шифрование индентификаторов выбранного типа
     encrypt(allind, file)
-
-
-
 
 
 # ф-я поиска и замены любых индентификаторов
@@ -225,7 +339,6 @@ def encrypt(allind, file):
     fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "w")
     fileopen.write(str(decrypt_table))
     fileopen.close()
-
 
 
 # функция дешивровки индентификаторов
