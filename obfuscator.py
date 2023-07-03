@@ -38,19 +38,25 @@ def launch():
 
         # цикл по всем файлам
         for file in files:
-            allind_search_and_raplace(file)
+            allind_search_and_replace(file)
 
     if json_struct["tasks"]["b"]:
 
         # цикл по всем файлам
         for file in files:
-            ind_search_and_raplace(file, json_struct["literalclass"])
+            ind_search_and_replace(file, json_struct["literalclass"])
 
     if json_struct["tasks"]["c"]:
 
         # цикл по всем файлам
         for file in files:
-            module_search_and_raplace_WOinout(file, json_struct["module"])
+            module_search_and_replace_WOinout(file, json_struct["module"])
+
+    if json_struct["tasks"]["d"]:
+
+        # цикл по всем файлам
+        for file in files:
+            ind_search_and_replace_protect(file)
 
 
 # ф-я обработки ifdef/ifndef и удаления окмментариев
@@ -66,8 +72,52 @@ def preobfuscator(file):
     #  удаляем комментарии
     erase_comments.delete(file, ["/\*[\s|\S]*?\*/", "//[^\n]*\n"], False)
 
+
+def ind_search_and_replace_protect(file):
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()  # текст всего файла
+    fileopen.close()
+
+    protectblocks = re.findall(r"`pragma protect on([\w|\W]+?)`pragma protect off", filetext)
+
+    if protectblocks != []:
+        # обработка ifdef/ifndef
+        preobfuscator(file)
+
+        fileopen = open(file, "r")  # открытие файла
+        filetext = fileopen.read()  # текст всего файла после обработки ifdef/ifndef
+        fileopen.close()
+
+        protectblocks = re.findall(r"`pragma protect on([\w|\W]+?)`pragma protect off", filetext)
+
+        for protectblock in protectblocks:
+            fileopen = open(file, "r")  # открытие файла
+            filetext = fileopen.read()  # текст всего файла после обработки ifdef/ifndef
+            fileopen.close()
+
+            # запись в файл текста protect блока
+            fileopen = open(file, "w")  # открытие файла
+            fileopen.write(protectblock)
+            fileopen.close()
+
+            # заменяем все индентификаторы в protect блоке
+            allind_search_and_replace(file)
+
+            # чтение нового текста модуля из файла
+            fileopen = open(file, "r")  # открытие файла
+            newprotectblock = fileopen.read()
+            fileopen.close()
+
+            # запись в файл текста с обработанным protect блоком
+            fileopen = open(file, "w")  # открытие файла
+            fileopen.write(filetext.replace("`pragma protect on" + protectblock + "`pragma protect off", newprotectblock))
+            fileopen.close()
+    else:
+        return
+
+
 # ф-я поиска и замены любых индентификаторов, кроме input/output/inout в заданном модуле
-def module_search_and_raplace_WOinout(file, module):
+def module_search_and_replace_WOinout(file, module):
 
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()  # текст всего файла
@@ -81,7 +131,7 @@ def module_search_and_raplace_WOinout(file, module):
         preobfuscator(file)
 
         fileopen = open(file, "r")  # открытие файла
-        filetext = fileopen.read()  # текст всего файла
+        filetext = fileopen.read()  # текст всего файла после обработки ifdef/ifndef
         fileopen.close()
 
         moduletext = moduleblock[0]  # текст блока модуля
@@ -166,20 +216,22 @@ def module_search_and_raplace_WOinout(file, module):
         # шифровка индентификаторов и создание таблицы соответствия
         encrypt(allind, file)
 
+        # чтение нового текста модуля из файла
         fileopen = open(file, "r")  # открытие файла
         newmoduletext = fileopen.read()
         fileopen.close()
 
+        # запись в файл текст с обработанным блоком module
         fileopen = open(file, "w")  # открытие файла
         fileopen.write(filetext.replace(moduletext, newmoduletext))
         fileopen.close()
     else:
-        print("module not found")
+        print("module in " + file + "not found")
         return
 
 
 # ф-я поиска и замены выбранного вида индентификаторов (input/output/inout, wire, reg, module, instance, parameter)
-def ind_search_and_raplace(file, ind):
+def ind_search_and_replace(file, ind):
 
     # обработка ifdef/ifndef
     preobfuscator(file)
@@ -221,7 +273,7 @@ def ind_search_and_raplace(file, ind):
 
 
 # ф-я поиска и замены любых индентификаторов
-def allind_search_and_raplace(file):
+def allind_search_and_replace(file):
 
     # обработка ifdef/ifndef
     preobfuscator(file)

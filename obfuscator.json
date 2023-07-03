@@ -3,8 +3,8 @@
           {
              "a":false,
              "b":false,
-             "c":true,
-             "d":false
+             "c":false,
+             "d":true
           },
    "conf":
           {
