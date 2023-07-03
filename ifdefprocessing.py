@@ -182,7 +182,7 @@ def ifdef_pr_forfile(file, json):
                 ifdefs[i] = re.search(r"[\s|\S]" + ifs[len(ifs) - 1] + r"[\s|\S]*?`endif", ifdefs[i])[0]
                 ifdefs[i] = ifdefs[i][1:]
 
-        # цикл по каждому блоку
+        # цикл обработки каждого блока
         for ifdef in ifdefs:
 
             index = filetext.find(ifdef)

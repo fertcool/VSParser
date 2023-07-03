@@ -1,17 +1,17 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":false,
+             "a":false,
+             "b":true,
              "c":false,
              "d":false
           },
    "conf":
           {
-            "allfiles": true,
+            "allfiles": false,
             "filename": "h.sv"
           },
-  "literalclass": "parameter",
+  "literalclass": "input/output/inout",
 
   "module": "scr1_timer"
 }
