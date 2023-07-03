@@ -40,18 +40,21 @@ def launch():
         for file in files:
             allind_search_and_replace(file)
 
+    # обфускация по выбранному классу индентификаторов (input/output/inout, wire, reg, module, instance, parameter)
     if json_struct["tasks"]["b"]:
 
         # цикл по всем файлам
         for file in files:
             ind_search_and_replace(file, json_struct["literalclass"])
 
+    # обфускация по индентификаторам input/output/inout в заданном модуле
     if json_struct["tasks"]["c"]:
 
         # цикл по всем файлам
         for file in files:
             module_search_and_replace_WOinout(file, json_struct["module"])
 
+    # обфускация в рамках (protect on - protect off)
     if json_struct["tasks"]["d"]:
 
         # цикл по всем файлам
@@ -211,7 +214,8 @@ def module_search_and_replace_WOinout(file, module):
 
         # удаление из списка allind найденных input/output/inout индентификаторов
         for i in range(len(inouts)):
-            allind.remove(inouts[i])
+            if inouts[i] in allind:
+                allind.remove(inouts[i])
 
         # шифровка индентификаторов и создание таблицы соответствия
         encrypt(allind, file)
@@ -393,23 +397,4 @@ def encrypt(allind, file):
     fileopen.close()
 
 
-# функция дешивровки индентификаторов
-def decrypt(file):
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()  # текст файла
-    fileopen.close()
-    decrypt_file_open = open(file.replace(".sv", "_decrypt_table.txt"), "r")  # открытие файла таблицы соответствия
-    decrypt_file_opentext = decrypt_file_open.read()  # текст таблицы соответствия
-    decrypt_file_open.close()
-
-    decrypt_table = ast.literal_eval(decrypt_file_opentext)  # таблица соответствия
-
-    # цикл замены индентификаторов согласно таблице соответствия
-    for indef in decrypt_table:
-        filetext = re.sub(indef, decrypt_table[indef], filetext)
-
-    # запись нового текста в файл
-    fileopen = open(file, "w")
-    fileopen.write(filetext)
-    fileopen.close()
 

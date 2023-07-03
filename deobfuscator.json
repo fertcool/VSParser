@@ -1,0 +1,17 @@
+{
+  "tasks":
+          {
+             "a":false,
+             "b":true,
+             "c":false
+
+          },
+   "conf":
+          {
+            "allfiles": false,
+            "filename": "h.sv"
+          },
+  "literalclass": "parameter",
+
+  "module": "scr1_reset_buf_cell"
+}

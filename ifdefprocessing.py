@@ -101,6 +101,7 @@ def include_for_file(file, json):
     fileopen.write(filetext)  # запись нового текста в файл
     fileopen.close()
 
+
 def ifdef_pr_forfile(file, json):
     #  удаляем комментарии с определениями
     erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)

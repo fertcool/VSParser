@@ -3,6 +3,7 @@ import re
 import json
 import scanfiles
 
+
 # ф-я запускающая удаление комментариев sv файлов
 def launch():
     json_file = open(r"erase_comments.json", "r")
