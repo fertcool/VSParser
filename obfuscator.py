@@ -207,7 +207,7 @@ def module_search_and_replace_WOinout(file, module):
                 base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных индентификаторов в base
 
         # поиск индентификаторов модулей и классов
-        module_ind = re.findall(r"(?:module|function)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", moduletext)
+        module_ind = re.findall(r"function[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", moduletext)
 
         # все индентификаторы (без повторов)
         allind = set(defines + base + enums + structs + typedefs + module_ind)  # все индентификаторы

@@ -31,6 +31,12 @@ def launch():
         for file in files:
             decrypt_one_ind(file, json_struct["literalclass"])
 
+    if json_struct["tasks"]["c"]:
+
+        # цикл по всем файлам
+        for file in files:
+            decrypt_module_inout(file, json_struct["module"])
+
 
 
 # функция дешивровки индентификаторов
@@ -115,6 +121,7 @@ def decrypt_one_ind(file, ind):
         print("literal not correct")
         return
 
+    # замена выбранного класса индентификаторов
     for ind in allind:
         if ind in decrypt_table:
             filetext = re.sub(ind, decrypt_table[ind], filetext)
@@ -123,3 +130,44 @@ def decrypt_one_ind(file, ind):
     fileopen = open(file, "w")
     fileopen.write(filetext)
     fileopen.close()
+
+
+def decrypt_module_inout(file, module):
+
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()  # текст файла
+    fileopen.close()
+
+    decrypt_file_open = open(file.replace(".sv", "_decrypt_table.txt"), "r")  # открытие файла таблицы соответствия
+    decrypt_file_opentext = decrypt_file_open.read()  # текст таблицы соответствия
+    decrypt_file_open.close()
+
+    decrypt_table = ast.literal_eval(decrypt_file_opentext)  # таблица соответствия
+
+    moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule *: *" + module + r"[.\n]", filetext)
+
+    if moduleblock != None:
+
+        moduletext = moduleblock[0]  # текст блока модуля
+
+        inouts = []  # список всех input/output/inout индентификаторов
+
+        # поиск всех input/output/inout индентификаторов
+        inouts_strs = re.findall(r"(?:input|output|inout) +([\w|\W]*?[,;\n)=])", moduletext)
+
+        # выделение самих индентификаторов из списка inouts_strs
+        for i in range(len(inouts_strs)):
+            inouts += re.findall(r"(\w+) *[,;\n)=]", inouts_strs[i])
+
+            # выделение индентификаторов, у которпых в конце [\d:\d]
+            inouts += re.findall(r"(\w+) +\[[\d :]+][,;\n]", inouts_strs[i])
+
+            # замена выбранного класса индентификаторов
+            for ind in inouts:
+                if ind in decrypt_table:
+                    filetext = re.sub(ind, decrypt_table[ind], filetext)
+
+            # запись нового текста в файл
+            fileopen = open(file, "w")
+            fileopen.write(filetext)
+            fileopen.close()

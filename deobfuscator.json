@@ -2,8 +2,8 @@
   "tasks":
           {
              "a":false,
-             "b":true,
-             "c":false
+             "b":false,
+             "c":true
 
           },
    "conf":
@@ -13,5 +13,5 @@
           },
   "literalclass": "parameter",
 
-  "module": "scr1_reset_buf_cell"
+  "module": "AsdBzvRuXJf"
 }
