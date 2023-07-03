@@ -230,7 +230,7 @@ def module_search_and_replace_WOinout(file, module):
         fileopen.write(filetext.replace(moduletext, newmoduletext))
         fileopen.close()
     else:
-        print("module in " + file + "not found")
+        print(module + " in " + file + " not found")
         return
 
 

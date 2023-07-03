@@ -171,3 +171,7 @@ def decrypt_module_inout(file, module):
             fileopen = open(file, "w")
             fileopen.write(filetext)
             fileopen.close()
+
+    else:
+        print(module + " in " + file + " not found")
+        return
