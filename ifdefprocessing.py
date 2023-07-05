@@ -128,7 +128,7 @@ def ifdef_pr_forfile(file, json):
             index = filetext.find(ifdef)
             textbefore = filetext[:index]  # текст до блока
 
-            defines = re.findall(r"`define +\w+\n", textbefore)  # все define до блока
+            defines = re.findall(r"`define +\w+", textbefore)  # все define до блока
             defines.extend(json["defines"])  # добавляем внешние define
             # оставляем только названия define
             for i in range(len(defines)):

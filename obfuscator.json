@@ -1,15 +1,15 @@
 {
   "tasks":
           {
-             "a":false,
+             "a":true,
              "b":false,
              "c":false,
-             "d":true
+             "d":false
           },
    "conf":
           {
-            "allfiles": false,
-            "filename": "h.sv"
+            "allfiles":true,
+            "filename": "checkmodules.sv"
           },
   "literalclass": "input/output/inout",
 

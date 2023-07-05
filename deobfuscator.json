@@ -1,14 +1,14 @@
 {
   "tasks":
           {
-             "a":false,
+             "a":true,
              "b":false,
-             "c":true
+             "c":false
 
           },
    "conf":
           {
-            "allfiles": false,
+            "allfiles": true,
             "filename": "h.sv"
           },
   "literalclass": "parameter",

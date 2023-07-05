@@ -1,16 +1,16 @@
 {
   "tasks":
           {
-            "a":false,
+            "a":true,
             "b":false,
             "c":false,
-            "d":true
+            "d":false
           },
 
   "conf":
   {
     "allfiles": true,
-    "filename": "example.txt"
+    "filename": "eee.txt"
   },
 
   "minus":
@@ -19,6 +19,11 @@
             "//[ -~]*\n"
           ],
   "plus":
+          [
+            "module +[\\w|\\W]+?endmodule *: *\\w+"
+          ],
+
+  "other":
           [
             "//[ -~]*\n"
           ]

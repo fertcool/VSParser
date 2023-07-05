@@ -16,7 +16,7 @@ def launch():
     else:
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
-    # восстановленеи обфусцированного кода по таблицам соответствия
+    # восстановление обфусцированного кода по таблицам соответствия
     if json_struct["tasks"]["a"]:
 
         # цикл по всем файлам
@@ -31,6 +31,7 @@ def launch():
         for file in files:
             decrypt_one_ind(file, json_struct["literalclass"])
 
+    # Частично восстановить исходный код из обфусцированного только для портов ввода вывода заданного модуля
     if json_struct["tasks"]["c"]:
 
         # цикл по всем файлам
@@ -39,7 +40,7 @@ def launch():
 
 
 
-# функция дешивровки индентификаторов
+# функция деобфускации всех индентификаторов
 def decryptall(file):
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()  # текст файла
@@ -59,7 +60,7 @@ def decryptall(file):
     fileopen.write(filetext)
     fileopen.close()
 
-
+# ф-я деобфускации выбранного вида индентификаторов (input/output/inout, wire, reg, module, instance, parameter)
 def decrypt_one_ind(file, ind):
 
     fileopen = open(file, "r")  # открытие файла
@@ -83,6 +84,7 @@ def decrypt_one_ind(file, ind):
 
         inouts = []  # список всех input/output/inout индентификаторов
 
+        # поиск всех input/output/inout индентификаторов
         if ind != "(?:input|output|inout)":
 
             # поиск всех input/output/inout индентификаторов
@@ -95,7 +97,7 @@ def decrypt_one_ind(file, ind):
                 # выделение индентификаторов, у которпых в конце [\d:\d]
                 inouts += re.findall(r"(\w+) +\[[\d :]+][,;\n]", inouts_strs[i])
 
-
+        # поиск всех строк с индентификаторами класса ind
         allinds_str = re.findall(ind + r" +([\w|\W]*?[,;\n)=])", filetext)
 
         # выделение самих индентификаторов из списка allinds_str
@@ -132,6 +134,7 @@ def decrypt_one_ind(file, ind):
     fileopen.close()
 
 
+# ф-я деобфускации индентификаторов input/output/inout выбранного модуля
 def decrypt_module_inout(file, module):
 
     fileopen = open(file, "r")  # открытие файла
@@ -146,6 +149,7 @@ def decrypt_module_inout(file, module):
 
     moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule *: *" + module + r"[.\n]", filetext)
 
+    # если нашли модуль
     if moduleblock != None:
 
         moduletext = moduleblock[0]  # текст блока модуля
@@ -171,7 +175,7 @@ def decrypt_module_inout(file, module):
             fileopen = open(file, "w")
             fileopen.write(filetext)
             fileopen.close()
-
+    # ошибка
     else:
         print(module + " in " + file + " not found")
         return
