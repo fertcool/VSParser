@@ -1,8 +1,8 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":false,
+             "a":false,
+             "b":true,
              "c":false,
              "d":false
           },
@@ -11,7 +11,7 @@
             "allfiles": false,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "reg",
+  "literalclass": "instance",
 
   "module": "scr1_reset_buf_cell"
 }
