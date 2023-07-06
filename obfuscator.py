@@ -232,12 +232,12 @@ def ind_search_and_replace(file, ind):
     # обработка ifdef/ifndef
     preobfuscator_ifdef(file)
 
+    # шифруем блоки instance, чтобы они не участвовали далее в обработке
+    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()  # текст файла
     fileopen.close()
-
-    # шифруем блоки instance, чтобы они не участвовали далее в обработке
-    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
 
     decrypt_table = {}  # таблица соответствия для замененных индентификаторов
 
@@ -320,6 +320,10 @@ def ind_search_and_replace(file, ind):
 
         # создаем файл с таблицей соответствия
         write_decrt_in_file(file, decrypt_table)
+
+        fileopen = open(file, "r")  # открытие файла
+        filetext = fileopen.read()  # текст файла
+        fileopen.close()
 
         # дешифруем instance блоки
         for decr_inst in decrypt_table_instances:
