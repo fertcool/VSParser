@@ -8,8 +8,8 @@
           },
    "conf":
           {
-            "allfiles": true,
-            "filename": "h.sv"
+            "allfiles": false,
+            "filename": "checkmodules.sv"
           },
   "literalclass": "parameter",
 

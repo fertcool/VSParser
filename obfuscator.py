@@ -7,7 +7,7 @@
 # byte / shortint / int / integer / longint / integer / bit / logic / shortreal / real
 # realtime / time
 # event
-# enum / typedef / class
+# enum / typedef
 # `define
 
 import ast
@@ -21,6 +21,7 @@ import erase_comments
 import ifdefprocessing
 import scanfiles
 
+allmodules = scanfiles.getallmodules(os.curdir)
 
 # запуск обфускации
 def launch():
@@ -143,17 +144,7 @@ def module_search_and_replace_WOinout(file, module):
         fileopen.write(moduletext)
         fileopen.close()
 
-        inouts = []  # список всех input/output/inout индентификаторов
-
-        # поиск всех input/output/inout индентификаторов
-        inouts_strs = re.findall(r"(?:input|output|inout) +([\w|\W]*?[,;\n)=])", moduletext)
-
-        # выделение самих индентификаторов из списка inouts_strs
-        for i in range(len(inouts_strs)):
-            inouts += re.findall(r"(\w+) *[,;\n)=]", inouts_strs[i])
-
-            # выделение индентификаторов, у которпых в конце [\d:\d]
-            inouts += re.findall(r"(\w+) +\[[\d :]+][,;\n]", inouts_strs[i])
+        inouts = search_inouts(moduletext)  # список всех input/output/inout индентификаторов
 
         defines = re.findall(r"`define +(\w+)", moduletext)  # список индентификаторов define
 
@@ -244,6 +235,11 @@ def ind_search_and_replace(file, ind):
     filetext = fileopen.read()
     fileopen.close()
 
+    # шифруем блоки instance, чтобы они не участвовали далее в обработке
+    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+
+    decrypt_table = {}  # таблица соответствия для замененных индентификаторов
+
     allind = []  # список всех индентификаторов
 
     # коррекция
@@ -252,6 +248,7 @@ def ind_search_and_replace(file, ind):
 
     # если выбранный тип индентификатора - базовый, то проводим соответствующий поиск
     if ind == "(?:input|output|inout)" or ind == "wire" or ind == "reg" or ind == "parameter":
+
         allinds_str = re.findall(ind + r" +([\w|\W]*?[,;\n)=])", filetext)
 
         # выделение самих индентификаторов из списка allinds_str
@@ -260,6 +257,31 @@ def ind_search_and_replace(file, ind):
 
             # выделение индентификаторов, у которпых в конце [\d:\d]
             allind += re.findall(r"(\w+) +\[[\d :]+][,;\n]", allinds_str[i])
+
+        # удаляем  inouts с типом ind из изменяемых
+        if ind != "(?:input|output|inout)":
+            inouts = search_inouts(filetext)
+
+            # удаляем input/output/inout порты из allind
+            for inout in inouts:
+                if inout in allind:
+                    allind.remove(inout)
+
+        # если обрабатываем input/output/inout порты, то надо в других файлахъ обработать instance
+        # блоки соответсвующих модулей
+        else:
+            # шифровка индентификаторов и создание таблицы соответствия
+            write_encrypt_in_file(allind, file, filetext, decrypt_table)
+
+            inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+
+            modules = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()",
+                                 filetext)  # список модулей, описанных в тексте файла
+
+            # заменяем все instance блоки в других файлах, тк мы изменили названия портов функций modules
+            ch_instances_ports_allf(modules, inv_decrypt_table)
+
+
 
     # если выбранный тип индентификатора - module или instance, то проводим соответствующий поиск
     elif ind == "module" or ind == "instance":
@@ -272,8 +294,7 @@ def ind_search_and_replace(file, ind):
         print("literal not correct")
         return
 
-    # шифрование индентификаторов выбранного типа
-    encrypt(allind, file)
+
 
 
 # ф-я поиска и замены любых индентификаторов
@@ -282,14 +303,15 @@ def allind_search_and_replace(file):
     # обработка ifdef/ifndef
     preobfuscator_ifdef(file)
 
+    # instance индентификаторы (имена)
+    instances = search_instances(file)
+
+    # шифруем блоки instance, чтобы они не участвовали далее в обрвботке
+    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()
     fileopen.close()
-
-
-    instances = search_instances(file)
-
-    decrypt_table_instances = preobfuscator_instance(file)
 
     defines = re.findall(r"`define +(\w+)", filetext)  # список индентификаторов define
 
@@ -302,6 +324,8 @@ def allind_search_and_replace(file):
         "int|integer|longint|bit|logic|shortreal|"
         "real|realtime|time|event"
         ") +([\w|\W]*?[,;\n)=])", filetext)
+
+
 
     # выделение самих индентификаторов из списка baseindentif
     for i in range(len(baseindentif)):
@@ -343,32 +367,39 @@ def allind_search_and_replace(file):
             base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных индентификаторов в base
 
     # поиск индентификаторов модулей и классов
-    ModuleClusses = re.findall(r"(?:module|task|function|class)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
+    ModuleClusses = re.findall(r"\W(?:module|task|function)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
 
     # все индентификаторы (без повторов)
     allind = set(defines + base + enums + structs + typedefs + ModuleClusses + instances)  # все индентификаторы
 
     # шифровка индентификаторов и создание таблицы соответствия
-    decrypt_table = encrypt(allind, file)
+    decrypt_table = {}
+    write_encrypt_in_file(allind, file, filetext, decrypt_table)
 
-    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}
+    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
 
-    modules = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
+    modules = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)  # список модулей, описанных в тексте файла
 
-
+    # заменяем все instance блоки в других файлах, тк мы изменили названия портов функций modules
     ch_instances_ports_allf(modules, inv_decrypt_table)
 
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()  # текст файла
     fileopen.close()
 
+    # создаем файл с таблицей соответствия
+    write_decrt_in_file(file, decrypt_table)
+
+    # дешифруем instance блоки
     for decr_inst in decrypt_table_instances:
         filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
+    # шифруем входные данные портов instance блока
     for invdt in inv_decrypt_table:
-        filetext = re.sub(r"\( *"+invdt+r" *\)", "("+inv_decrypt_table[invdt]+")", filetext)
+        filetext = re.sub(r"\( *"+invdt, "("+inv_decrypt_table[invdt], filetext)
 
-
+    for inst in instances:
+        filetext = filetext.replace(inst, inv_decrypt_table[inst])
 
     fileopen = open(file, "w")  # открытие файла
     fileopen.write(filetext)
@@ -376,13 +407,8 @@ def allind_search_and_replace(file):
 
 
 
-# ф-я шиврования индентификаторов и создания таблицы соответсвия
-def encrypt(allind, file):
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()  # текст файла
-    fileopen.close()
-
-    decrypt_table = {}  # таблица соответствия
+# ф-я шиврования индентификаторов в тексте и создания таблицы соответсвия
+def encrypt(allind, filetext, decrypt_table):
 
     # цикл замены всех индентификаторов
     for ind in allind:
@@ -396,6 +422,8 @@ def encrypt(allind, file):
                                                                   # ищем именно совпадения с несловесными символами по
                                                                   # бокам
         # цикл замены каждого совпадения на случайную строку
+        if ind == "scr1_tapc":
+            print("sssss")
         for indef in indefic:
             first = indef[0]  # несловесный символ слева от совпадения
             last = indef[len(indef) - 1]  # несловесный справа слева от совпадения
@@ -415,18 +443,34 @@ def encrypt(allind, file):
             # замена совпадения на случайную строку
             filetext = re.sub(indef, first + rand_string + last, filetext)
 
-    # запись шифрованного текста
-    fileopen = open(file, "w")
+    # # запись шифрованного текста
+    # fileopen = open(file, "w")
+    # fileopen.write(filetext)
+    # fileopen.close()
+    #
+    # # запись таблицы соответствия в файл
+    # fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "w")
+    # fileopen.write(str(decrypt_table))
+    # fileopen.close()
+
+    return filetext
+
+
+# ф-я записи вместо текста text зашиврованного текста в файл file
+def write_encrypt_in_file(allind, file, text, decrypt_table):
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()
+    fileopen.close()
+
+    filetext = filetext.replace(text, encrypt(allind, text, decrypt_table))
+
+    fileopen = open(file, "w")  # открытие файла
     fileopen.write(filetext)
     fileopen.close()
-
-    # запись таблицы соответствия в файл
-    fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "w")
-    fileopen.write(str(decrypt_table))
+def write_decrt_in_file(file, decrypt_table):
+    fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "a")
+    fileopen.write(str(decrypt_table)+"\n")
     fileopen.close()
-
-    return decrypt_table
-
 
 # возращает имена всех instance обьектов
 def search_instances(file):
@@ -435,14 +479,15 @@ def search_instances(file):
     filetext = fileopen.read()  # текст файла
     fileopen.close()
 
-    modules = scanfiles.getallmodules(os.curdir)
+    modules = allmodules
 
     instances = []
 
     for module in modules:
 
-        searched_instance = re.findall(module + r" +(\w+) *(?:\(|#\()[\w|\W]+?\) *;", filetext) # поменять
-
+        searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)  # поменять, должен учитывать
+        # #(params) имя (inouts)
+        searched_instance += re.findall(module+r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
         if searched_instance != []:
             instances += searched_instance
         else:
@@ -455,25 +500,24 @@ def preobfuscator_instance(file):
     filetext = fileopen.read()  # текст файла
     fileopen.close()
 
-    modules = scanfiles.getallmodules(os.curdir)
+    modules = allmodules
 
     decrypt_table = {}
 
     for module in modules:
 
-        searched_instance = re.search(module + r" +\w+ *(\([\w|\W]+?\) *;)", filetext)
+        searched_instances = re.findall(module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
+        searched_instances += re.findall(module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
+        if searched_instances != []:
 
-        if searched_instance != None:
+            for instance_block in searched_instances:
 
-            instance_block = searched_instance[1]
+                letters_and_digits = string.ascii_letters + string.digits
+                rand_string = ''.join(random.sample(letters_and_digits, 40))  # создание случайной строки
 
-            letters_and_digits = string.ascii_letters + string.digits
-            rand_string = ''.join(random.sample(letters_and_digits, 40))  # ссоздание случайной строки
+                decrypt_table[rand_string] = instance_block
 
-            decrypt_table[rand_string] = instance_block
-
-            filetext = filetext.replace(instance_block, rand_string)
-
+                filetext = filetext.replace(instance_block, rand_string)
 
         else:
             continue
@@ -491,6 +535,8 @@ def ch_instances_ports_allf(modules, decr_table):
     for file in files:
 
         preobfuscator_ifdef(file)
+        
+        decrypt_table_instances = {}
 
         fileopen = open(file, "r")  # открытие файла
         filetext = fileopen.read()  # текст файла
@@ -498,8 +544,8 @@ def ch_instances_ports_allf(modules, decr_table):
 
         for module in modules:
 
-            instances = re.findall(module + r" +\w+ *(?:\(|#\()[\w|\W]+?\) *;", filetext)
-
+            instances = re.findall(module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
+            instances += re.findall(module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
             if instances != []:
 
                 for instance in instances:
@@ -512,15 +558,26 @@ def ch_instances_ports_allf(modules, decr_table):
                     for inout in inouts:
                         if inout in decr_table:
                             instance = instance.replace("." + inout + ' ', "." + decr_table[inout] + " ")
-
+                            decrypt_table_instances[decr_table[inout]] = inout
+                            
+                    instance = instance.replace(module + " ", decr_table[module]+" ")
                     filetext = filetext.replace(oldinstance, instance)
 
-
-                    filetext = filetext.replace(module + " ", decr_table[module]+" ")
+                    decrypt_table_instances[decr_table[module]] = module
 
 
             else:
                 continue
+        
+        if decrypt_table_instances != {}:
+            write_decrt_in_file(file, decrypt_table_instances)
 
         fileopen = open(file, "w")  # открытие файла
         fileopen.write(filetext)
+        fileopen.close()
+
+def search_inouts(text):
+    inouts = []  # список input/output/inout портов
+    inouts += re.findall(r"(?:input|output|inout) +[\w|\W]*?(\w+) *[,;\n)=]", text)
+    inouts += re.findall(r"(?:input|output|inout) +[\w|\W]*?(\w+) +\[[\d :]+][,;\n]", text)
+    return inouts

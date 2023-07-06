@@ -10,11 +10,11 @@ import onlymodules
 
 # ifdefprocessing.launch()
 # erase_comments.launch()
-# deobfuscator.launch()
+deobfuscator.launch()
 
 # mod = scanfiles.getallmodules(os.curdir)
 # print(mod)
-obfuscator.launch()
+# obfuscator.launch()
 # obfuscator.obfuscate_instances(r"checkmodules.sv")
 # onlymodules.launch()
 print("Done!")

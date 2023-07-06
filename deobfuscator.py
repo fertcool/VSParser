@@ -46,11 +46,17 @@ def decryptall(file):
     filetext = fileopen.read()  # текст файла
     fileopen.close()
     decrypt_file_open = open(file.replace(".sv", "_decrypt_table.txt"), "r")  # открытие файла таблицы соответствия
-    decrypt_file_opentext = decrypt_file_open.read()  # текст таблицы соответствия
+    decrypt_file_opentext = decrypt_file_open.read().split("\n")  # текст таблицы соответствия
     decrypt_file_open.close()
 
-    decrypt_table = ast.literal_eval(decrypt_file_opentext)  # таблица соответствия
+    decrypt_file_opentext.pop()
+    decrt_list = []
+    for decrt_text in decrypt_file_opentext:
+        decrt_list.append(ast.literal_eval(decrt_text))
 
+    decrypt_table={}
+    for decrt in decrt_list:
+        decrypt_table.update(decrt)
     # цикл замены индентификаторов согласно таблице соответствия
     for indef in decrypt_table:
         filetext = re.sub(indef, decrypt_table[indef], filetext)

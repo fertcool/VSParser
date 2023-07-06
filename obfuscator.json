@@ -8,10 +8,10 @@
           },
    "conf":
           {
-            "allfiles":true,
+            "allfiles": false,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "input/output/inout",
+  "literalclass": "reg",
 
   "module": "scr1_reset_buf_cell"
 }
