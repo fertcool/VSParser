@@ -597,7 +597,7 @@ def search_instances(file):
     fileopen.close()
 
     # все модули и их порты
-    modules = allmodules
+    modules = scanfiles.getallmodules(os.curdir)
 
     instances = []  # список instance обьектов
 
@@ -624,7 +624,7 @@ def preobfuscator_instance(file):
     filetext = fileopen.read()  # текст файла
     fileopen.close()
 
-    modules = allmodules  # все модули проекта
+    modules = scanfiles.getallmodules(os.curdir)  # все модули проекта
 
     decrypt_table = {}  # таблица соответствия зашифрованных блоков instance
 

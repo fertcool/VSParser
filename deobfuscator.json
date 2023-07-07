@@ -1,8 +1,8 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":false,
+             "a":false,
+             "b":true,
              "c":false
 
           },
@@ -11,7 +11,7 @@
             "allfiles": true,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "module",
+  "literalclass": "instance",
 
   "module": "scr1_tapc_shift_reg"
 }
