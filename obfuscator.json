@@ -2,16 +2,16 @@
   "tasks":
           {
              "a":false,
-             "b":true,
+             "b":false,
              "c":false,
-             "d":false
+             "d":true
           },
    "conf":
           {
             "allfiles": false,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "instance",
+  "literalclass": "parameter",
 
-  "module": "scr1_reset_buf_cell"
+  "module": "scr1_tapc_shift_reg"
 }
