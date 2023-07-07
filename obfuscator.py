@@ -23,6 +23,7 @@ import scanfiles
 
 allmodules = scanfiles.getallmodules(os.curdir)  # все модули и их порты
 
+
 # запуск обфускации
 def launch():
     json_file = open(r"obfuscator.json", "r")
@@ -123,20 +124,7 @@ def ind_search_and_replace_protect(file):
         return
 
 
-
-
-
-
-
 # ф-€ поиска и замены любых индентификаторов, кроме input/output/inout в заданном модуле
-
-
-
-
-# надо помен€ть
-
-
-
 def module_search_and_replace_WOinout(file, module):
 
     fileopen = open(file, "r")  # открытие файла
@@ -429,8 +417,6 @@ def ind_search_and_replace(file, ind):
         return
 
 
-
-
 # ф-€ поиска и замены любых индентификаторов
 def allind_search_and_replace(file):
 
@@ -531,7 +517,8 @@ def allind_search_and_replace(file):
         filetext = re.sub(r"\( *"+invdt, "("+inv_decrypt_table[invdt], filetext)
     
     # замен€ем инлентификаторы instance
-    filetext = encrypt_text(instances, filetext, {})
+    for inst in instances:
+        filetext = filetext.replace(inst, inv_decrypt_table[inst])
     
     # запись обфусцированного текста
     fileopen = open(file, "w")  # открытие файла
@@ -575,16 +562,6 @@ def encrypt_text(allind, filetext, decrypt_table):
             # замена совпадени€ на случайную строку
             filetext = re.sub(indef, first + rand_string + last, filetext)
 
-    # # запись шифрованного текста
-    # fileopen = open(file, "w")
-    # fileopen.write(filetext)
-    # fileopen.close()
-    #
-    # # запись таблицы соответстви€ в файл
-    # fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "w")
-    # fileopen.write(str(decrypt_table))
-    # fileopen.close()
-
     return filetext
 
 
@@ -605,9 +582,11 @@ def encrypt_file(allind, file, text, decrypt_table):
     
 # ф-€ создани€ (или добавление в существующий файл) таблицы замены индентификаторов
 def write_decrt_in_file(file, decrypt_table):
-    fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "a")
-    fileopen.write(str(decrypt_table)+"\n")
-    fileopen.close()
+
+    if decrypt_table:
+        fileopen = open(file.replace(".sv", "_decrypt_table.txt"), "a")
+        fileopen.write(str(decrypt_table)+"\n")
+        fileopen.close()
 
 
 # возращает имена всех instance обьектов
@@ -622,51 +601,65 @@ def search_instances(file):
 
     instances = []  # список instance обьектов
 
+    # цикл поиска instance модул€ module из списка modules в файле
     for module in modules:
 
-        searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)  # помен€ть, должен учитывать
-        # #(params) им€ (inouts)
+        # поиск
+        searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
         searched_instance += re.findall(module+r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
-        if searched_instance != []:
+
+        # добавление в список
+        if searched_instance:
             instances += searched_instance
         else:
             continue
 
+    # возврат списка имен instance
     return instances
             
             
-# ф-€ скрывающа€ (замена на случайную строку) instance блоков
+# ф-€ скрывающа€ (замена на случайную строку) instance блоков, дл€ правильной обработки остального текста
 def preobfuscator_instance(file):
     fileopen = open(file, "r")  # открытие файла
     filetext = fileopen.read()  # текст файла
     fileopen.close()
 
-    modules = allmodules
+    modules = allmodules  # все модули проекта
 
-    decrypt_table = {}
+    decrypt_table = {}  # таблица соответстви€ зашифрованных блоков instance
 
+    # цикл поиска и шивровани€ блоков instance
     for module in modules:
 
+        # поиск
         searched_instances = re.findall(module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
         searched_instances += re.findall(module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
-        if searched_instances != []:
 
+        # если нашли, то замен€ем все блоки
+        if searched_instances:
+
+            # замена блоков
             for instance_block in searched_instances:
 
                 letters_and_digits = string.ascii_letters + string.digits
                 rand_string = ''.join(random.sample(letters_and_digits, 40))  # создание случайной строки
 
+                # сохран€ем замену в таблице соответстви€
                 decrypt_table[rand_string] = instance_block
 
+                # замена в тексте
                 filetext = filetext.replace(instance_block, rand_string)
 
+        # если не нашли, то продолжаем поиск
         else:
             continue
 
+    # запись зашиврованного текста
     fileopen = open(file, "w")  # открытие файла
     fileopen.write(filetext)
     fileopen.close()
 
+    # возврат таблицы соответсви€ зашиврованный блоков instance
     return decrypt_table
 
 

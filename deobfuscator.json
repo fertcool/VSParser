@@ -6,12 +6,12 @@
              "c":false
 
           },
-   "conf":
+  "conf":
           {
-            "allfiles": false,
+            "allfiles": true,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "parameter",
+  "literalclass": "module",
 
-  "module": "AsdBzvRuXJf"
+  "module": "scr1_tapc_shift_reg"
 }
