@@ -2,9 +2,9 @@ import json
 import os
 import ast
 import re
-
-import obfuscator
 import scanfiles
+import obfuscator
+
 
 allfiles = scanfiles.getsv(os.curdir)  # добавляем файлы всего проекта
 

@@ -21,7 +21,7 @@ import erase_comments
 import ifdefprocessing
 import scanfiles
 
-allmodules = scanfiles.getallmodules(os.curdir)  # все модули и их порты
+# allmodules = scanfiles.getallmodules(os.curdir)  # все модули и их порты
 
 
 # запуск обфускации
@@ -514,7 +514,7 @@ def allind_search_and_replace(file):
 
     # шифруем входные данные портов instance блока
     for invdt in inv_decrypt_table:
-        filetext = re.sub(r"\( *"+invdt, "("+inv_decrypt_table[invdt], filetext)
+        filetext = change_ind(filetext, invdt, inv_decrypt_table[invdt])
     
     # заменяем инлентификаторы instance
     for inst in instances:
@@ -537,30 +537,7 @@ def encrypt_text(allind, filetext, decrypt_table):
 
         decrypt_table[rand_string] = ind  # добавляем в таблицу новое соответствие новому индентификатору
 
-        indefic = set(re.findall(r'\W' + ind + r'\W', filetext))  # поиск всех совпадений с текущим индентификатором
-                                                                  # ищем именно совпадения с несловесными символами по
-                                                                  # бокам
-        # цикл замены каждого совпадения на случайную строку
-        if ind == "scr1_tapc":
-            print("sssss")
-        for indef in indefic:
-            first = indef[0]  # несловесный символ слева от совпадения
-            last = indef[len(indef) - 1]  # несловесный справа слева от совпадения
-
-            # заменяем некоторые симвылы для правильной задачи регулярного выражения
-            indef = indef.replace("(", r"\(")
-            indef = indef.replace("{", r"\{")
-            indef = indef.replace(".", r"\.")
-            indef = indef.replace("?", r"\?")
-            indef = indef.replace("*", r"\*")
-            indef = indef.replace("|", r"\|")
-            indef = indef.replace("[", r"\[")
-            indef = indef.replace(")", r"\)")
-            indef = indef.replace("]", r"\]")
-            indef = indef.replace("+", r"\+")
-
-            # замена совпадения на случайную строку
-            filetext = re.sub(indef, first + rand_string + last, filetext)
+        filetext = change_ind(filetext, ind, rand_string)
 
     return filetext
 
@@ -735,3 +712,29 @@ def search_inouts(text):
     inouts += re.findall(r"(?:input|output|inout) +[\w|\W]*?(\w+) *[,;\n)=]", text)
     inouts += re.findall(r"(?:input|output|inout) +[\w|\W]*?(\w+) +\[[\d :]+][,;\n]", text)
     return inouts
+
+def change_ind(text, ind, newind):
+    indefic = set(re.findall(r'\W' + ind + r'\W', text))  # поиск всех совпадений с текущим индентификатором
+    # ищем именно совпадения с несловесными символами по
+    # бокам
+    # цикл замены каждого совпадения на случайную строку
+    for indef in indefic:
+        first = indef[0]  # несловесный символ слева от совпадения
+        last = indef[len(indef) - 1]  # несловесный справа слева от совпадения
+
+        # заменяем некоторые симвылы для правильной задачи регулярного выражения
+        indef = indef.replace("(", r"\(")
+        indef = indef.replace("{", r"\{")
+        indef = indef.replace(".", r"\.")
+        indef = indef.replace("?", r"\?")
+        indef = indef.replace("*", r"\*")
+        indef = indef.replace("|", r"\|")
+        indef = indef.replace("[", r"\[")
+        indef = indef.replace(")", r"\)")
+        indef = indef.replace("]", r"\]")
+        indef = indef.replace("+", r"\+")
+
+        # замена совпадения на случайную строку
+        text = re.sub(indef, first + newind + last, text)
+
+    return text

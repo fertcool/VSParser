@@ -1,0 +1,13 @@
+{
+  "tasks":
+          {
+             "a":false,
+             "b":true,
+             "c":false
+
+          },
+
+  "literalclass": "instance",
+
+  "report_filename" : "report"
+}
