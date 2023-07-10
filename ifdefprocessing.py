@@ -6,7 +6,7 @@ import erase_comments
 
 # ф-я запускающая препроцессинг sv файлов
 def launch():
-    json_file = open(r"ifdefprocessing.json", "r")
+    json_file = open(r"jsons/ifdefprocessing.json", "r")
     json_struct = json.load(json_file)
 
     files = []  # список файлов для которых проводится работа

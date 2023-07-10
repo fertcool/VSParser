@@ -10,7 +10,7 @@ allfiles = scanfiles.getsv(os.curdir)  # добавляем файлы всего проекта
 
 # запуск деобфускации
 def launch():
-    json_file = open(r"deobfuscator.json", "r")
+    json_file = open(r"jsons/deobfuscator.json", "r")
     json_struct = json.load(json_file)
 
     files = []  # список файлов для которых проводится работа

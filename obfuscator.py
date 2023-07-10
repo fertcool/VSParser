@@ -26,7 +26,7 @@ import scanfiles
 
 # запуск обфускации
 def launch():
-    json_file = open(r"obfuscator.json", "r")
+    json_file = open(r"jsons/obfuscator.json", "r")
     json_struct = json.load(json_file)
 
     files = []  # список файлов для которых проводится работа
@@ -68,7 +68,7 @@ def launch():
 def preobfuscator_ifdef(file):
     # json ifdef скрипта
     # нужен для включения доп. списка include
-    json_file_ifdef = open("ifdefprocessing.json", "r")
+    json_file_ifdef = open("jsons/ifdefprocessing.json", "r")
     json_ifdef_struct = json.load(json_file_ifdef)
 
     # включаем все include файлы

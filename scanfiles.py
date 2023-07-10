@@ -103,8 +103,6 @@ def getmodules_infile(file, modules, onlymodules = True):
                         allind.remove(inouts[i])
 
 
-
-
                 modules[modulename] = {}
                 modules[modulename]["port"] = inouts
                 modules[modulename]["net"] = nets
