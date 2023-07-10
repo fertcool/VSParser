@@ -72,18 +72,22 @@ def getmodules_infile(file, modules, onlymodules = True):
 
                 inouts = obfuscator.search_inouts(moduleblock)
                 instances = obfuscator.search_instances(file)
-                regs_strs = re.findall(r"reg +([\w|\W]*?[,;\n)=])", moduleblock)
+                regs_strs = re.findall(r"reg +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
+
                 nets_strs = re.findall(
         r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с информацией после типа индентификатора
         r"supply1|trireg|wor|triand|"
-        r"trior|wand) +([\w|\W]*?[,;\n)=])", moduleblock)
+        r"trior|wand) +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
+                nets_strs += re.findall(r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с структурами
+        r"supply1|trireg|wor|triand|"
+        r"trior|wand) +struct[\w :\[\]\-`]*?\{[\w|\W]*?} *(\w+)[,;\n)=]", moduleblock)
                 nets = []
                 # выделение самих индентификаторов из списка nets
                 for i in range(len(nets_strs)):
                     nets += re.findall(r"(\w+) *[,;\n)=]", nets_strs[i])
 
                     # выделение индентификаторов, у которпых в конце [\d:\d]
-                    nets += re.findall(r"(\w+) +\[[\d :]+][,;\n]", nets_strs[i])
+                    nets += re.findall(r"(\w+) +[\d :\[\]]+[,;\n]", nets_strs[i])
                 regs = []
                 # выделение самих индентификаторов из списка nets
                 for i in range(len(regs_strs)):

@@ -77,12 +77,11 @@ def get_insts_in_modules(dir):
         filetext = fileopen.read()  # текст файла
         fileopen.close()
 
-        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+[.\n]", filetext)
-
+        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+", filetext)
 
         for moduleblock in moduleblocks:
 
-            modulename = re.search("endmodule *: *(\w+)[.\n]", moduleblock)[1]
+            modulename = re.search("endmodule *: *(\w+)", moduleblock)[1]
             insts_in_modules_dict[modulename] = []
 
             for inst in insts:

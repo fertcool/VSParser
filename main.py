@@ -5,7 +5,7 @@ import erase_comments
 import read_hierarchy
 import scanfiles
 import obfuscator
-import onlymodules
+
 
 # obfuscator.launch()
 
