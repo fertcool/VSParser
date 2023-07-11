@@ -1,12 +1,10 @@
 import os
 import re
-
 import obfuscator
 
 
-# поиск всех sv файлов в директории и поддиректориях
-def scan(dir, svfiles):
-
+# ф-я поиска всех sv файлов (путей у ним) в директории и поддиректориях
+def scan_svfiles(dir, svfiles):
     # dirfiles = []  # все файлы и папки директории
     dirpathes = []  # все папки директории
 
@@ -27,90 +25,112 @@ def scan(dir, svfiles):
 
     # идем дальше по всем папкам в текущей дериктории
     for path in dirpathes:
-        scan(dir + "\\" + path, svfiles)
+        scan_svfiles(dir + "\\" + path, svfiles)
 
 
-# получить список sv файлов
+# ф-я получить список sv файлов
 def getsv(dir):
     svfiles = []  # список путей sv файлов
-    scan(dir, svfiles)
+    scan_svfiles(dir, svfiles)
     return svfiles
 
 
+# ф-я поиска списка всех модулей проекта или же словаря модулей (с обьектами reg, net, instance, port)
 def getallmodules(dir, onlymodules = True):
 
     # перед поиском желательно удалить все комментарии и выполнить обработку ifdef/ifndef
     # можно использовать obfuscator.preobfuscator()
 
     svfiles = getsv(dir)  # список путей sv файлов
+    # если флаг onlymodules = false то работаем со словарем
     if not onlymodules:
-        modules = {}  # словарь модулей во всем проекте, где ключ - название модуля, а значение - список его портов
+
+        modules = {}  # словарь модулей во всем проекте, где ключ - название модуля,
+        # а значение - словарь типов reg, net, instance, port со списками соответствующих обьектов
+
+    # если флаг onlymodules = true то работаем со списком
     else:
-        modules = []
+        modules = []  # список модулей во всем проекте
+
+    # поиск модулей во всех файлах
     for svfile in svfiles:
         getmodules_infile(svfile, modules, onlymodules)
 
     return modules
 
 
-def getmodules_infile(file, modules, onlymodules = True):
-    fileopen = open(file, "r")
-    filetext = fileopen.read()
+# ф-я поиска либо словаря модулей либо списка модулей в 1 файле
+def getmodules_infile(file, modules, onlymodules=True):
+
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()  # текст файла
     fileopen.close()
 
+    # список полных текстов блоков модулей файла
     moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+", filetext)
 
-    if moduleblocks:
-        for moduleblock in moduleblocks:
+    # цикл обработки всех модулей
+    for moduleblock in moduleblocks:
 
-            modulename = re.search(r"endmodule *: *(\w+)", moduleblock)[1]
+        modulename = re.search(r"endmodule *: *(\w+)", moduleblock)[1]  # имя модуля
 
-            if not onlymodules:
-                fileopenwm = open(file, "w")
-                fileopenwm.write(moduleblock)
-                fileopenwm.close()
+        # если обрабатываем словарь модулей
+        if not onlymodules:
 
-                inouts = obfuscator.search_inouts(moduleblock)
-                instances = obfuscator.search_instances(file)
-                regs_strs = re.findall(r"reg +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
+            # записываем в файл только текст модуля
+            fileopenwm = open(file, "w")
+            fileopenwm.write(moduleblock)
+            fileopenwm.close()
 
-                nets_strs = re.findall(
-        r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с информацией после типа индентификатора
-        r"supply1|trireg|wor|triand|"
-        r"trior|wand) +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
-                nets_strs += re.findall(r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с структурами
-        r"supply1|trireg|wor|triand|"
-        r"trior|wand) +struct[\w :\[\]\-`]*?\{[\w|\W]*?} *(\w+)[,;\n)=]", moduleblock)
-                nets = []
-                # выделение самих индентификаторов из списка nets
-                for i in range(len(nets_strs)):
-                    nets += re.findall(r"(\w+) *[,;\n)=]", nets_strs[i])
+            inouts = obfuscator.search_inouts(moduleblock)  # списко портов модуля
 
-                    # выделение индентификаторов, у которпых в конце [\d:\d]
-                    nets += re.findall(r"(\w+) +[\d :\[\]]+[,;\n]", nets_strs[i])
-                regs = []
-                # выделение самих индентификаторов из списка nets
-                for i in range(len(regs_strs)):
-                    regs += re.findall(r"(\w+) *[,;\n)=]", regs_strs[i])
+            instances = obfuscator.search_instances(file)  # список instance обьектов модуля
 
-                    # выделение индентификаторов, у которпых в конце [\d:\d]
-                    regs += re.findall(r"(\w+) +\[[\d :]+][,;\n]", regs_strs[i])
+            regs_strs = re.findall(r"reg +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)  # список строк с обьектами regs
 
-                allind = inouts+regs+nets+instances
-                # удаление из списка allind найденных input/output/inout индентификаторов
-                for i in range(len(inouts)):
-                    if inouts[i] in allind:
-                        allind.remove(inouts[i])
+            nets_strs = re.findall(
+                r"(?:wire|tri|tri0|tri1|supply0|"  # список строк обьектами nets
+                r"supply1|trireg|wor|triand|"
+                r"trior|wand) +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
+            nets_strs += re.findall(r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с структурами обьектов nets
+                                    r"supply1|trireg|wor|triand|"
+                                    r"trior|wand) +struct[\w :\[\]\-`]*?\{[\w|\W]*?} *(\w+)[,;\n)=]", moduleblock)
+            nets = []
+            # выделение самих индентификаторов из списка nets
+            for i in range(len(nets_strs)):
+                nets += re.findall(r"(\w+) *[,;\n)=]", nets_strs[i])
 
+                # выделение индентификаторов, у которпых в конце [\d:\d]
+                nets += re.findall(r"(\w+) +[\d :\[\]]+[,;\n]", nets_strs[i])
+            regs = []
+            # выделение самих индентификаторов из списка nets
+            for i in range(len(regs_strs)):
+                regs += re.findall(r"(\w+) *[,;\n)=]", regs_strs[i])
 
-                modules[modulename] = {}
-                modules[modulename]["port"] = inouts
-                modules[modulename]["net"] = nets
-                modules[modulename]["regs"] = regs
-                modules[modulename]["instances"] = instances
+                # выделение индентификаторов, у которпых в конце [\d:\d]
+                regs += re.findall(r"(\w+) +\[[\d :]+][,;\n]", regs_strs[i])
 
-                fileopenwm = open(file, "w")
-                fileopenwm.write(filetext)
-                fileopenwm.close()
-            else:
-                modules.append(modulename)
+            allind = inouts + regs + nets + instances  # список всех идентификаторов
+
+            # удаление из списка allind найденных input/output/inout индентификаторов
+            for i in range(len(inouts)):
+                if inouts[i] in allind:
+                    allind.remove(inouts[i])
+
+            # добавление обьектов reg, net, instance, port в словарь
+            modules[modulename] = {}
+            modules[modulename]["port"] = inouts
+            modules[modulename]["net"] = nets
+            modules[modulename]["regs"] = regs
+            modules[modulename]["instances"] = instances
+
+            # обратно записываем код в файл
+            fileopenwm = open(file, "w")
+            fileopenwm.write(filetext)
+            fileopenwm.close()
+
+        # если обрабатываем список модулей
+        else:
+
+            # добавляем модуль в список
+            modules.append(modulename)
