@@ -3,17 +3,17 @@ import os
 import re
 from queue import Queue
 import obfuscator
-import scanfiles
+import work_with_files
 
 json_file = open(r"jsons/read_hierarchy.json", "r")
 json_struct = json.load(json_file)  # json словарь
 
-files = scanfiles.getsv(os.curdir)  # sv файлы всего проекта
+files = scanfiles.get_sv_files(os.curdir)  # sv файлы всего проекта
 # ifdef/ifndef обработка всех фалйов
 for file in files:
     obfuscator.preobfuscator_ifdef(file)
 
-modules = scanfiles.getallmodules(os.curdir)  # все модули
+modules = scanfiles.get_all_modules(os.curdir)  # все модули
 
 
 # запуск чтения иерархии
@@ -217,7 +217,7 @@ def project_allobjects_report(filename, inst_in_modules_dict):
     roots = get_roots_modules(inst_in_modules_dict)
 
     # получаем словарь модулей со всеми их обьектами (reg, net, instance, port)
-    modules_with_objects = scanfiles.getallmodules(os.curdir, False)
+    modules_with_objects = scanfiles.get_all_modules(os.curdir, False)
 
     modules_queue = Queue()  # очередь instance обьектов
 

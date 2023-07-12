@@ -1,7 +1,7 @@
 import os
 import re
 import json
-import scanfiles
+import work_with_files
 
 
 # ф-я запускающая удаление комментариев sv файлов
@@ -36,7 +36,7 @@ def deletecomments(json, patterns, plus = False):
     if json["conf"]["allfiles"]:
 
         # получение списка путей к файлам sv
-        svfiles = scanfiles.getsv(os.curdir)
+        svfiles = scanfiles.get_sv_files(os.curdir)
 
         # цикл по всем файлам
         for sv in svfiles:

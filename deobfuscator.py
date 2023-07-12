@@ -2,11 +2,11 @@ import json
 import os
 import ast
 import re
-import scanfiles
+import work_with_files
 import obfuscator
 
 
-allfiles = scanfiles.getsv(os.curdir)  # добавляем файлы всего проекта
+allfiles = scanfiles.get_sv_files(os.curdir)  # добавляем файлы всего проекта
 
 # запуск деобфускации
 def launch():
@@ -15,7 +15,7 @@ def launch():
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:
-        files = scanfiles.getsv(os.curdir)  # добавляем файлы всего проекта
+        files = scanfiles.get_sv_files(os.curdir)  # добавляем файлы всего проекта
     else:
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 

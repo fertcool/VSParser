@@ -2,9 +2,9 @@ import os
 import re
 
 import deobfuscator
-import scanfiles
+import work_with_files
 
-files = scanfiles.getsv(os.curdir)
+files = scanfiles.get_sv_files(os.curdir)
 tables = []
 
 
