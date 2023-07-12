@@ -67,12 +67,12 @@ def getmodules_infile(file, modules, onlymodules=True):
     fileopen.close()
 
     # список полных текстов блоков модулей файла
-    moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+", filetext)
+    moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
 
     # цикл обработки всех модулей
     for moduleblock in moduleblocks:
 
-        modulename = re.search(r"endmodule *: *(\w+)", moduleblock)[1]  # имя модуля
+        modulename = re.search(r"module +(\w+)", moduleblock)[1]  # имя модуля
 
         # если обрабатываем словарь модулей
         if not onlymodules:
@@ -82,7 +82,7 @@ def getmodules_infile(file, modules, onlymodules=True):
             fileopenwm.write(moduleblock)
             fileopenwm.close()
 
-            inouts = obfuscator.search_inouts(moduleblock)  # списко портов модуля
+            inouts = obfuscator.search_inouts(moduleblock)  # список портов модуля
 
             instances = obfuscator.search_instances(file)  # список instance обьектов модуля
 

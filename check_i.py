@@ -34,13 +34,13 @@ def scan_tables(dir, svfiles):
 def launch():
     scan_tables(os.curdir, tables)
     for file in files:
-        fileopen = open("report", "r")
+        fileopen = open("report.txt", "r")
         filetext = fileopen.read()
         fileopen.close()
 
         if re.search(r"\$root", filetext):
             print(file)
-    fileopen = open("report", "r")
+    fileopen = open("report.txt", "r")
     filetext = fileopen.read()
     fileopen.close()
 

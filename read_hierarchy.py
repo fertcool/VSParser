@@ -67,12 +67,12 @@ def get_insts_in_modules(dir):
         fileopen.close()
 
         # список полных текстов блоков модулей файла
-        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+", filetext)
+        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
 
         # цикл поиска instance обьектов во всех модулях файла
         for moduleblock in moduleblocks:
 
-            modulename = re.search(r"endmodule *: *(\w+)", moduleblock)[1]  # имя модуля
+            modulename = re.search(r"module +(\w+)", moduleblock)[1]  # имя модуля
 
             insts_in_modules_dict[modulename] = []  # инициализируем список instance обьектов модуля
 
@@ -278,7 +278,7 @@ def splitting_modules_by_files(dir):
         fileopen.close()
 
         # список полных текстов блоков модулей файла
-        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule *: *\w+", filetext)
+        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
 
         # если нашли файл с более чем 1 модулем, то разделяем файл
         if len(moduleblocks) > 1:
@@ -286,7 +286,7 @@ def splitting_modules_by_files(dir):
             # цикл обработки каждого модуля в файле
             for moduleblock in moduleblocks:
 
-                modulename = re.search(r"endmodule *: *(\w+)", moduleblock)[1]  # имя модуля
+                modulename = re.search(r"module +(\w+)", moduleblock)[1]  # имя модуля
 
                 filetext_with_cur_module = filetext  # текст файла с текущим модулем
 

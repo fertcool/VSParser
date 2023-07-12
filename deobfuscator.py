@@ -162,7 +162,7 @@ def decrypt_module_inout(file, module):
 
     decrypt_table = ast.literal_eval(decrypt_file_opentext)  # таблица соответствия
 
-    moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule *: *" + module + r"[.\n]", filetext)
+    moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule", filetext)
 
     # если нашли модуль
     if moduleblock:

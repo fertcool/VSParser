@@ -79,6 +79,13 @@ def preobfuscator_ifdef(file):
     #  удаляем комментарии
     erase_comments.delete(file, ["/\*[\s|\S]*?\*/", "//[^\n]*\n"], False)
 
+    fileopen = open(file, "r")  # открытие файла
+    filetext = fileopen.read()  # текст всего файла
+    fileopen.close()
+
+    fileopen = open(file, "w")  # открытие файла
+    fileopen.write("\n"+filetext)
+    fileopen.close()
 
 def ind_search_and_replace_protect(file):
     fileopen = open(file, "r")  # открытие файла
@@ -131,7 +138,7 @@ def module_search_and_replace_WOinout(file, module):
     filetext = fileopen.read()  # текст всего файла
     fileopen.close()
 
-    moduleblock = re.search(r"module +"+module+r"[\w|\W]+?endmodule *: *"+module+r"[.\n]", filetext)
+    moduleblock = re.search(r"module +"+module+r"[\w|\W]+?endmodule", filetext)
 
     # если нашли модуль, то обрабатываем его
     if moduleblock:
@@ -143,7 +150,7 @@ def module_search_and_replace_WOinout(file, module):
         filetext = fileopen.read()  # текст всего файла после обработки ifdef/ifndef (до обработки модуля)
         fileopen.close()
 
-        moduletext = re.search(r"module +"+module+r"[\w|\W]+?endmodule *: *"+module+r"[.\n]", filetext)[0]  # текст блока модуля
+        moduletext = re.search(r"module +"+module+r"[\w|\W]+?endmodule", filetext)[0]  # текст блока модуля
 
         # запись модуля в текст (на замену старому коду будет только обрабатываемый модуль)
         fileopen = open(file, "w")  # открытие файла
@@ -439,18 +446,31 @@ def allind_search_and_replace(file):
     # в группе хранятся списки индентификаторов
     base = []
     baseindentif = re.findall(
-        "(?:input|output|inout|wire|reg|"  # список строк с информацией после типа индентификатора
+        "\W(?:input|output|inout|wire|reg|"  # список строк с информацией после типа индентификатора
         "parameter|localparam|byte|shortint|"
         "int|integer|longint|bit|logic|shortreal|"
         "real|realtime|time|event"
-        ") +([\w|\W]*?[,;\n)=])", filetext)
+        ") +(.*?[,;)=])", filetext)
 
+    baseindentif += re.findall(
+        "\W(?:input|output|inout|wire|reg|"  # поиск строк со множественным определением
+        "parameter|localparam|byte|shortint|"
+        "int|integer|longint|bit|logic|shortreal|"
+        "real|realtime|time|event"
+        ") +.*?,(.*?;)", filetext)
+
+    baseindentif += re.findall(
+        "\W(?:input|output|inout|wire|reg|"  # поиск строк с \n в конце
+        "parameter|localparam|byte|shortint|"
+        "int|integer|longint|bit|logic|shortreal|"
+        "real|realtime|time|event"
+        ") +([^;,)=\n]+?\n)", filetext)
     # выделение самих индентификаторов из списка baseindentif
     for i in range(len(baseindentif)):
-        base += re.findall(r"(\w+) *[,;\n)=]", baseindentif[i])
+        base += re.findall(r"(\w+) *[,;)=\n]", baseindentif[i])
 
         # выделение индентификаторов, у которпых в конце [\d:\d]
-        base += re.findall(r"(\w+) +\[[\d :]+][,;\n]", baseindentif[i])
+        base += re.findall(r"(\w+) +\[[\d :]+] *[,;=\n]", baseindentif[i])
 
     # список строк с блоками enums
     # в 1 группе хранится текст внутри блока
@@ -514,11 +534,27 @@ def allind_search_and_replace(file):
 
     # шифруем входные данные портов instance блока
     for invdt in inv_decrypt_table:
-        filetext = change_ind(filetext, invdt, inv_decrypt_table[invdt])
+        ports = set(re.findall(r"\( *"+invdt+r"\W", filetext))
+        for port in ports:
+
+            # заменяем некоторые симвылы для правильной задачи регулярного выражения
+            port = port.replace("(", r"\(")
+            port = port.replace("{", r"\{")
+            port = port.replace(".", r"\.")
+            port = port.replace("?", r"\?")
+            port = port.replace("*", r"\*")
+            port = port.replace("|", r"\|")
+            port = port.replace("[", r"\[")
+            port = port.replace(")", r"\)")
+            port = port.replace("]", r"\]")
+            port = port.replace("+", r"\+")
+
+            filetext = re.sub(port, "("+inv_decrypt_table[re.search(r"\w+", port)[0]] + port[len(port)-1], filetext)
+
     
     # заменяем инлентификаторы instance
     for inst in instances:
-        filetext = filetext.replace(inst, inv_decrypt_table[inst])
+        filetext = re.sub(inst+r" *\(", inv_decrypt_table[inst]+"(", filetext)
     
     # запись обфусцированного текста
     fileopen = open(file, "w")  # открытие файла
@@ -660,6 +696,14 @@ def change_instances_ports_allf(modules, decr_table):
         # цикл обработки instance обьектов модулей modules
         for module in modules:
 
+            # находим обращения к модулю и заменяем
+            ObjWithSubObj = False
+            for obj in decr_table:
+                filetext = re.sub(module + "\." + obj, decr_table[module]+"." + decr_table[obj], filetext)
+                ObjWithSubObj = True
+            if not ObjWithSubObj:
+                filetext = re.sub(module + "\.", decr_table[module] + ".", filetext)
+
             # находим все instance обьекты (их текст)
             instances = re.findall(module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
             instances += re.findall(module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
@@ -674,12 +718,12 @@ def change_instances_ports_allf(modules, decr_table):
                     oldinstance = instance
 
                     # поиск всех портов обьекта
-                    inouts = re.findall(r"\.(\w+) ", instance)
+                    inouts = re.findall(r"\.(\w+)", instance)
 
                     # цикл замены названия портов на соответствующие в таблице decr_table
                     for inout in inouts:
                         if inout in decr_table:
-                            instance = instance.replace("." + inout + ' ', "." + decr_table[inout] + " ")
+                            instance = change_ind(instance, inout, decr_table[inout])
 
                             # добавляем в таблицу decrypt_table_instances соответствующую замену из decr_table
                             decrypt_table_instances[decr_table[inout]] = inout
@@ -687,7 +731,7 @@ def change_instances_ports_allf(modules, decr_table):
                     # если необходимо - заменяем название модуля instance обьекта и добавляем в таблицу
                     # decrypt_table_instances
                     if module in decr_table:
-                        instance = instance.replace(module + " ", decr_table[module]+" ")
+                        instance = instance.replace(module, decr_table[module])
                         decrypt_table_instances[decr_table[module]] = module
 
                     # заменяем текст на измененный
