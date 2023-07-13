@@ -1,8 +1,14 @@
+# СКРИПТ РАБОТЫ С IFDEF/IFNDEF ВЕТКАМИ И ВКЛЮЧЕНИЯ INCLUDE ФАЙЛОВ
+# настройка конфигурации осуществляется в "ifdefprocessing.json"
+
 import json
 import os
 import re
 import work_with_files
 import erase_comments
+
+
+# ------------------------------ЗАПУСК_СКРИПТА------------------------------ #
 
 # ф-я запускающая препроцессинг sv файлов
 def launch():
@@ -11,7 +17,7 @@ def launch():
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:
-        files = scanfiles.get_sv_files(os.curdir)  # добавляем файлы всего проекта
+        files = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
     else:
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
@@ -24,10 +30,13 @@ def launch():
 
     # обработка ifdef/ifndef
     if json_struct["tasks"]["b"]:
+
         # цикл по всем файлам
         for file in files:
             ifdef_pr_forfile(file, json_struct)
 
+
+# ------------------------------ФУНКЦИИ_РАБОТЫ_С_INCLUDE_ФАЙЛАМИ------------------------------ #
 
 # ф-я добавляющая в текст sv файла include файлы (в том числе включая include включаемого файла)
 def addincludes(json, filetext, included = None):
@@ -36,12 +45,7 @@ def addincludes(json, filetext, included = None):
         included = []
 
     # поиск всех include в файле (расположенных последовательно)
-    includes = re.findall(r"`include *\"[\w\.]+\"", filetext)
-
-    # оставляем только названия включаемых файлов
-    for i in range(len(includes)):
-        includes[i] = re.sub("`include +", '', includes[i])
-        includes[i] = re.sub("\"", '', includes[i])
+    includes = re.findall(r"`include *\"([\w\.]+)\"", filetext)
 
     # цикл по всем включаемым файлам
     for include in includes:
@@ -53,17 +57,17 @@ def addincludes(json, filetext, included = None):
             # если файл в текущей директоии есть (и он еще не был включен)
             # , то добавляем текст включаемого файла
             if os.path.exists(includepath+"\\"+include) and include not in included:
-                existfile = True
-                includetextopen = open(includepath+"\\"+include, "r")
-                includetext = includetextopen.read()
+
+                existfile = True  # флаг существования файла
+
+                includetext = work_with_files.get_file_text(includepath+"\\"+include)  # текст включаемого файла
 
                 # вставляем в файл на место 1 включения
                 filetext = re.sub("`include *\""+include+"\"", includetext, filetext, 1)
 
                 # удаление повторяющихся включений
                 filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
-                                 filetext)
-                includetextopen.close()
+                                  filetext)
 
                 # добавляем вставленный файл в список включенных
                 included.append(include)
@@ -78,11 +82,12 @@ def addincludes(json, filetext, included = None):
         if not existfile:
 
             # добавляем пометку
-            if include not in included: # если файл не был включен
-                filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist", filetext)
+            if include not in included:  # если файл не был включен
+                filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist",
+                                  filetext)
             else:  # если файл был включен
                 filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
-                                 filetext)
+                                  filetext)
             continue
 
     return filetext
@@ -90,24 +95,23 @@ def addincludes(json, filetext, included = None):
 
 # ф-я добавления всех include файлов для 1 файла
 def include_for_file(file, json):
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()
+
+    filetext = work_with_files.get_file_text(file)
 
     # изменяем текст sv файла - заменяем `include на текст соответствующего файла
     filetext = addincludes(json, filetext)
 
-    fileopen.close()  # закрытие файла
-    fileopen = open(file, "w")
-    fileopen.write(filetext)  # запись нового текста в файл
-    fileopen.close()
+    work_with_files.write_text_to_file(file, filetext)  # запись нового текста в файл
 
 
+# ------------------------------ФУНКЦИИ_IFDEF/IFNDEF_ОБРАБОТКИ------------------------------ #
+
+# ф-я ifdef/ifndef обработки файла
 def ifdef_pr_forfile(file, json):
     #  удаляем комментарии с определениями
     erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
 
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()
+    filetext = work_with_files.get_file_text(file)  # текст файла
 
     # цикл пока есть блоки ifdef или ifndef в файле
     while (re.search(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filetext)):
@@ -140,15 +144,11 @@ def ifdef_pr_forfile(file, json):
 
             filetext = filetext.replace(ifdef, newifdef)
 
-    # запись в файл кода без лишних блоков ifdef/ifndef
-    fileopen.close()
-    fileopen = open(file, "w")
-
     # убираем лишние отступы
     filetext = re.sub(r"\n{3,}", "\n\n", filetext)
 
-    fileopen.write(filetext)
-    fileopen.close()
+    # запись в файл кода без лишних блоков ifdef/ifndef
+    work_with_files.write_text_to_file(file, filetext)
 
 
 # ф-я проверяющая 1 блок ifdef/ifndef
@@ -159,7 +159,7 @@ def ifblockprocessing(blockstr, defines):
     elsifs = re.findall(r"`elsif +\w+\n", blockstr)
     else_ = re.search(r"`else", blockstr)
 
-    if else_ != None:
+    if else_:
         else_ = else_[0]
 
     # сравниваем макросы ifdef/ifndef с define
@@ -198,17 +198,22 @@ def ifblockprocessing(blockstr, defines):
 
 # ф-я возвращающая внутренний код блока
 def cleanblock(block, face):
+
     blockwithface = re.search(face + r"[\s|\S]*?`elsif", block)
-    if blockwithface != None:  # если блок с elsif концом
+
+    if blockwithface:  # если блок с elsif концом
         blockwithface = blockwithface[0]
         blockwithface = re.sub(face, '', blockwithface)
         blockwithface = re.sub("`elsif", '', blockwithface)
     else:
+
         blockwithface = re.search(face + r"[\s|\S]*?`else", block)
-        if blockwithface != None:  # если блок с else концом
+
+        if blockwithface:  # если блок с else концом
             blockwithface = blockwithface[0]
             blockwithface = re.sub(face, '', blockwithface)
             blockwithface = re.sub("`else", '', blockwithface)
+
         else:  # если блок с endif концом
             blockwithface = re.search(face + r"[\s|\S]*?`endif", block)
             blockwithface = blockwithface[0]

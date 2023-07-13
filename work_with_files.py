@@ -1,8 +1,11 @@
+# ФУНКЦИИ РАБОТЫ С ФАЙЛАМИ
+
 import os
 import re
 import obfuscator
 
 
+# ------------------------------ФУНКЦИИ_РАБОТЫ_С_ТЕКСТОМ_ФАЙЛА------------------------------ #
 # ф-я отдающая текст файла
 def get_file_text(file):
 
@@ -21,7 +24,16 @@ def write_text_to_file(file, text):
     fileopenwm.close()
 
 
-# ф-я поиска всех sv файлов (путей у ним) в директории и поддиректориях
+# добавление текста в файл
+def add_text_to_file(text, file):
+
+    fileopen = open(file, "a")
+    fileopen.write(text + "\n")
+    fileopen.close()
+
+
+# ------------------------------ФУНКЦИИ_ПОИСКА_ФАЙЛОВ_SV------------------------------ #
+# ф-я поиска всех sv файлов (путей у них) в директории и поддиректориях
 def scan_svfiles(dir, svfiles):
     # dirfiles = []  # все файлы и папки директории
     dirpathes = []  # все папки директории
@@ -53,6 +65,7 @@ def get_sv_files(dir):
     return svfiles
 
 
+# ------------------------------ФУНКЦИИ_ПОИСКА_МОДУЛЕЙ------------------------------ #
 # ф-я поиска списка всех модулей проекта или же словаря модулей (с обьектами reg, net, instance, port)
 def get_all_modules(dir, onlymodules = True):
 
@@ -112,29 +125,19 @@ def get_modules_infile(file, modules, onlymodules=True):
 
             nets = []  # итоговый список с nets обьектами
 
-            # выделение самих индентификаторов из списка nets
+            # выделение самих идентификаторов из списка nets
             for i in range(len(nets_strs)):
                 nets += re.findall(r"(\w+) *[,;\n)=]", nets_strs[i])
 
-                # выделение индентификаторов, у которпых в конце [\d:\d]
-                nets += re.findall(r"(\w+) +[\d :\[\]]+[,;\n]", nets_strs[i])
+                # выделение идентификаторов, у которпых в конце [\d:\d]
+                nets += re.findall(r"(\w+) +\[[\d :\-*\w`]+] *[,;=\n]", nets_strs[i])
 
-            regs = []  # итоговый список с regs обьектами
+            regs = obfuscator.base_ind_search(moduleblock, ["reg"])
 
-            # выделение самих индентификаторов из списка nets
-            for i in range(len(regs_strs)):
+            allind = set(inouts + regs + nets + instances)  # список всех идентификаторов
 
-                regs += re.findall(r"(\w+) *[,;\n)=]", regs_strs[i])
-
-                # выделение индентификаторов, у которпых в конце [\d:\d]
-                regs += re.findall(r"(\w+) +\[[\d :]+][,;\n]", regs_strs[i])
-
-            allind = inouts + regs + nets + instances  # список всех идентификаторов
-
-            # удаление из списка allind найденных input/output/inout индентификаторов
-            for i in range(len(inouts)):
-                if inouts[i] in allind:
-                    allind.remove(inouts[i])
+            # удаление из списка allind найденных input/output/inout идентификаторов
+            obfuscator.delete_inouts(inouts, allind)
 
             # добавление обьектов reg, net, instance, port в словарь
             modules[modulename] = {}

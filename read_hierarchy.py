@@ -1,3 +1,6 @@
+# — –»ѕ“ „“≈Ќ»я »≈–ј–’»» ѕ–ќ≈ “ј
+# настройка конфигурации осуществл€етс€ в "read_hierarchy.json"
+
 import json
 import os
 import re
@@ -5,35 +8,42 @@ from queue import Queue
 import obfuscator
 import work_with_files
 
+# ------------------------------»Ќ»÷»јЋ»«ј÷»я_√ЋќЅјЋ№Ќџ’_ѕ≈–≈ћ≈ЌЌџ’------------------------------ #
+
 json_file = open(r"jsons/read_hierarchy.json", "r")
 json_struct = json.load(json_file)  # json словарь
 
-files = scanfiles.get_sv_files(os.curdir)  # sv файлы всего проекта
+files = work_with_files.get_sv_files(os.curdir)  # sv файлы всего проекта
+
 # ifdef/ifndef обработка всех фалйов
-for file in files:
-    obfuscator.preobfuscator_ifdef(file)
+for file_g in files:
+    obfuscator.preobfuscator_ifdef(file_g)
 
-modules = scanfiles.get_all_modules(os.curdir)  # все модули
+modules = work_with_files.get_all_modules(os.curdir)  # все модули
 
+
+# ------------------------------«јѕ”— _„“≈Ќ»я_»≈–ј–’»»------------------------------ #
 
 # запуск чтени€ иерархии
 def launch():
     # восстановление структуры вызовов модулей
     if json_struct["tasks"]["a"]:
-        restoring_call_structure(os.curdir)
+        restoring_call_structure()
 
     # поиск иерархических путей ко всем обьектам модулей
     if json_struct["tasks"]["b"]:
-        search_allmodule_objects(os.curdir)
+        search_allmodule_objects()
 
     # разделение файлов с несколькими модул€ми
     if json_struct["tasks"]["c"]:
-        splitting_modules_by_files(os.curdir)
+        splitting_modules_by_files()
 
+
+# ------------------------------ќ—Ќќ¬Ќџ≈_‘”Ќ ÷»»------------------------------ #
 
 # ф-€ запуска восстановлени€ структуры вызовов модулей
-def restoring_call_structure(dir):
-    inst_in_modules_dict = get_insts_in_modules(dir)  # словарь модулей (ключ - название модул€,
+def restoring_call_structure():
+    inst_in_modules_dict = get_insts_in_modules()  # словарь модулей (ключ - название модул€,
     # значение - список instance обьектов в этом модуле (с типом обьекта в круглых скобках))
 
     # запись в файл отчета структуры вызовов модулей
@@ -43,57 +53,53 @@ def restoring_call_structure(dir):
     project_objects_inst_report(json_struct["report_filename"], inst_in_modules_dict)
 
 
-# ф-€ получени€ списка всех instance обьектов по словарю модулей (в круглых скобках - тип обьекта)
-def get_inst_list(insts_in_modules_dict):
-    insts = []  # список instance обьектов
+# ф-€ запуска поиска иерархических путей ко всем обьектам модулей (reg, net, instance, port)
+def search_allmodule_objects():
 
-    # цикл добавлени€ instance обьектов из словар€ в список
-    for module in insts_in_modules_dict:
-        insts += insts_in_modules_dict[module]
+    inst_in_modules_dict = get_insts_in_modules()  # словарь модулей (ключ - название модул€,
+    # значение - список instance обьектов в этом модуле (с типом обьекта в круглых скобках))
 
-    return insts
+    # поиск иерархических путей ко всем обьектам модулей (reg, net, instance, port)
+    project_allobjects_report(json_struct["report_filename"], inst_in_modules_dict)
 
 
-# ф-€ создани€ словар€ модулей (ключ - название модул€,
-# значение - список instance обьектов в этом модуле (с типом обьекта в круглых скобках))
-def get_insts_in_modules(dir):
-    insts_in_modules_dict = {}  # словарь модулей
+# ф-€ разделение файлов с несколькими модул€ми
+def splitting_modules_by_files():
 
-    # цикл порлучени€ instance обьектов каждого файла
+    # цикл по всем файлам
     for file in files:
 
-        fileopen = open(file, "r")  # открытие файла
-        filetext = fileopen.read()  # текст файла
-        fileopen.close()
+        filetext = work_with_files.get_file_text(file)  # текст файла
 
         # список полных текстов блоков модулей файла
         moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
 
-        # цикл поиска instance обьектов во всех модул€х файла
-        for moduleblock in moduleblocks:
+        # если нашли файл с более чем 1 модулем, то раздел€ем файл
+        if len(moduleblocks) > 1:
 
-            modulename = re.search(r"module +(\w+)", moduleblock)[1]  # им€ модул€
+            # цикл обработки каждого модул€ в файле
+            for moduleblock in moduleblocks:
 
-            insts_in_modules_dict[modulename] = []  # инициализируем список instance обьектов модул€
+                modulename = re.search(r"module +(\w+)", moduleblock)[1]  # им€ модул€
 
-            # цикл поиска instance модул€ module из списка modules в файле
-            for module in modules:
+                filetext_with_cur_module = filetext  # текст файла с текущим модулем
 
-                # поиск
-                searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
-                searched_instance += re.findall(module + r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
+                # цикл удалени€ из текста файла других модулей
+                for moduleblock_another in moduleblocks:
+                    if moduleblock_another == moduleblock:
+                        continue
+                    else:
+                        filetext_with_cur_module = filetext_with_cur_module.replace(moduleblock_another, '')
 
-                # добавление в список с типом в круглых скобках
-                if searched_instance:
-                    for inst in searched_instance:
-                        insts_in_modules_dict[modulename].append(inst + "(" + module + ")")
+                # саздаем новый файл с отдельным модулем и вписываем туда основной код файла и текст модул€
+                work_with_files.write_text_to_file(re.sub(r"[\w\.]+$", modulename, file) + ".sv",
+                                                   filetext_with_cur_module)
 
-                # если instance обьектов нет - продолжаем поиск
-                else:
-                    continue
+            # удал€ем файл с несколькими модул€ми
+            os.remove(file)
 
-    return insts_in_modules_dict
 
+# ------------------------------‘”Ќ ÷»»_ѕ»— ј_»_ѕ≈„ј“»_»≈–ј–’»»------------------------------ #
 
 # ф-€ поиска корневых модулей
 def get_roots_modules(inst_in_modules_dict):
@@ -217,7 +223,7 @@ def project_allobjects_report(filename, inst_in_modules_dict):
     roots = get_roots_modules(inst_in_modules_dict)
 
     # получаем словарь модулей со всеми их обьектами (reg, net, instance, port)
-    modules_with_objects = scanfiles.get_all_modules(os.curdir, False)
+    modules_with_objects = work_with_files.get_all_modules(os.curdir, False)
 
     modules_queue = Queue()  # очередь instance обьектов
 
@@ -257,50 +263,58 @@ def project_allobjects_report(filename, inst_in_modules_dict):
     fileopen.close()  # закрытие файла
 
 
-# ф-€ запуска поиска иерархических путей ко всем обьектам модулей (reg, net, instance, port)
-def search_allmodule_objects(dir):
+# ------------------------------¬—ѕќћќ√ј“≈Ћ№Ќџ≈_‘”Ќ ÷»»------------------------------ #
 
-    inst_in_modules_dict = get_insts_in_modules(dir)  # словарь модулей (ключ - название модул€,
-    # значение - список instance обьектов в этом модуле (с типом обьекта в круглых скобках))
+# ф-€ получени€ списка всех instance обьектов по словарю модулей (в круглых скобках - тип обьекта)
+def get_inst_list(insts_in_modules_dict):
 
-    # поиск иерархических путей ко всем обьектам модулей (reg, net, instance, port)
-    project_allobjects_report(json_struct["report_filename"], inst_in_modules_dict)
+    insts = []  # список instance обьектов
+
+    # цикл добавлени€ instance обьектов из словар€ в список
+    for module in insts_in_modules_dict:
+        insts += insts_in_modules_dict[module]
+
+    return insts
 
 
-# ф-€ разделение файлов с несколькими модул€ми
-def splitting_modules_by_files(dir):
+# ф-€ создани€ словар€ модулей (ключ - название модул€,
+# значение - список instance обьектов в этом модуле (с типом обьекта в круглых скобках))
+def get_insts_in_modules():
+    insts_in_modules_dict = {}  # словарь модулей
 
-    # цикл по всем файлам
+    # цикл порлучени€ instance обьектов каждого файла
     for file in files:
 
-        fileopen = open(file, "r")  # открытие файла
-        filetext = fileopen.read()  # текст файла
-        fileopen.close()
+        filetext = work_with_files.get_file_text(file)  # текст файла
 
         # список полных текстов блоков модулей файла
         moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
 
-        # если нашли файл с более чем 1 модулем, то раздел€ем файл
-        if len(moduleblocks) > 1:
+        # цикл поиска instance обьектов во всех модул€х файла
+        for moduleblock in moduleblocks:
 
-            # цикл обработки каждого модул€ в файле
-            for moduleblock in moduleblocks:
+            modulename = re.search(r"module +(\w+)", moduleblock)[1]  # им€ модул€
 
-                modulename = re.search(r"module +(\w+)", moduleblock)[1]  # им€ модул€
+            insts_in_modules_dict[modulename] = []  # инициализируем список instance обьектов модул€
 
-                filetext_with_cur_module = filetext  # текст файла с текущим модулем
+            # цикл поиска instance модул€ module из списка modules в файле
+            for module in modules:
 
-                # цикл удалени€ из текста файла других модулей
-                for moduleblock_another in moduleblocks:
-                    if moduleblock_another == moduleblock:
-                        continue
-                    else:
-                        filetext_with_cur_module = filetext_with_cur_module.replace(moduleblock_another, '')
+                # поиск
+                searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
+                searched_instance += re.findall(module + r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
 
-                # саздаем новый файл с отдельным модулем и вписываем туда основной код файла и текст модул€
-                newfileopen = open(re.sub(r"[\w\.]+$", modulename, file) + ".sv", "w")
-                newfileopen.write(filetext_with_cur_module)
-                newfileopen.close()
+                # добавление в список с типом в круглых скобках
+                if searched_instance:
+                    for inst in searched_instance:
+                        insts_in_modules_dict[modulename].append(inst + "(" + module + ")")
 
-            # удал€ем файл с несколькими модул€ми
-            os.remove(file)
+                # если instance обьектов нет - продолжаем поиск
+                else:
+                    continue
+
+    return insts_in_modules_dict
+
+
+
+

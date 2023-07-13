@@ -1,9 +1,12 @@
+# СКРИПТ РАБОТЫ С УДАЛЕНИЕМ КОММЕНТАРИЕВ
+# настройка конфигурации осуществляется в "erase_comments.json"
 import os
 import re
 import json
 import work_with_files
 
 
+# ------------------------------ЗАПУСК_УДАЛЕНИЯ------------------------------ #
 # ф-я запускающая удаление комментариев sv файлов
 def launch():
     json_file = open(r"jsons/erase_comments.json", "r")
@@ -29,6 +32,7 @@ def launch():
         deletecomments(json_struct, json_struct["plus"], True)
 
 
+# ------------------------------ОСНОВНЫЕ_ФУНКЦИИ------------------------------ #
 # ф-я запускающая удаление либо во всем проекте либо в 1 файле
 def deletecomments(json, patterns, plus = False):
 
@@ -36,7 +40,7 @@ def deletecomments(json, patterns, plus = False):
     if json["conf"]["allfiles"]:
 
         # получение списка путей к файлам sv
-        svfiles = scanfiles.get_sv_files(os.curdir)
+        svfiles = work_with_files.get_sv_files(os.curdir)
 
         # цикл по всем файлам
         for sv in svfiles:
@@ -53,8 +57,8 @@ def deletecomments(json, patterns, plus = False):
 
 # удаление комментариев по заданному списку шаблонов
 def delete(svfile, patterns, plus):
-    file = open(svfile, "r")
-    svtext = file.read()  # текст кода sv
+
+    svtext = work_with_files.get_file_text(svfile)  # текст кода sv
 
     # если работаем с plus списком
     if plus:
@@ -87,15 +91,15 @@ def delete(svfile, patterns, plus):
 
                 # удаляем комментарий, совпавший с шаблоном
                 svtext = re.sub(pattern, '\n', svtext)
-    file.close()
+
     file = open(svfile, "w")
 
     # убираем лишние отступы
     svtext = re.sub(r"\n{3,}", "\n\n", svtext)
 
     # запись в файл текста кода без комментариев
-    file.write(svtext)
-    file.close()
+    work_with_files.write_text_to_file(file, svtext)
+
 
 
 

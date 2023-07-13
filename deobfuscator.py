@@ -1,3 +1,6 @@
+# СКРИПТ ДЕШИВРОВКИ ФАЙЛОВ ПОСЛЕ ОБФУСКАЦИИ
+# настройка конфигурации осуществляется в "deobfuscator.json"
+
 import json
 import os
 import ast
@@ -5,8 +8,10 @@ import re
 import work_with_files
 import obfuscator
 
+allfiles = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
 
-allfiles = scanfiles.get_sv_files(os.curdir)  # добавляем файлы всего проекта
+
+# ------------------------------ЗАПУСК_ДЕОБФУСКАЦИИ------------------------------ #
 
 # запуск деобфускации
 def launch():
@@ -15,7 +20,7 @@ def launch():
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:
-        files = scanfiles.get_sv_files(os.curdir)  # добавляем файлы всего проекта
+        files = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
     else:
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
@@ -42,87 +47,67 @@ def launch():
             decrypt_module_inout(file, json_struct["module"])
 
 
-# функция деобфускации всех индентификаторов в файле
+# ------------------------------ОСНОВНЫЕ_ФУНКЦИИ------------------------------ #
+
+# функция деобфускации всех идентификаторов в файле
 def decryptall(file):
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()  # текст файла
-    fileopen.close()
 
-    # ищем все порты и параметры модулей в файле, чтобы далее расшивровать их во всех файлах
+    filetext = work_with_files.get_file_text(file)  # текст файла
 
-    # список строк с определением или инициализацией базовых индентификаторов
-    # в группе хранятся списки индентификаторов
-    ports = []
-    ports_indentif = re.findall(
-        "(?:input|output|inout|"  # список строк с информацией после типа индентификатора
-        "parameter) +([\w|\W]*?[,;\n)=])", filetext)
-
-    # выделение самих индентификаторов из списка baseindentif
-    for i in range(len(ports_indentif)):
-        ports += re.findall(r"(\w+) *[,;\n)=]", ports_indentif[i])
-
-        # выделение индентификаторов, у которпых в конце [\d:\d]
-        ports += re.findall(r"(\w+) +\[[\d :]+][,;\n]", ports_indentif[i])
+    # ищем все порты и параметры модулей в файле, чтобы далее расшиaвровать их во всех файлах
+    ports = obfuscator.base_ind_search(filetext, ["input", "output", "inout", "parameter"])
 
     modules = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)  # список модулей, описанных в тексте файла
 
     # получаем таблицу соответствия
     decrypt_table = get_decrt_in_file(file)
 
-    # цикл замены индентификаторов согласно таблице соответствия
-    for indef in decrypt_table:
-        filetext = re.sub(indef, decrypt_table[indef], filetext)
+    # цикл замены идентификаторов согласно таблице соответствия
+    for ident in decrypt_table:
+        filetext = re.sub(ident, decrypt_table[ident], filetext)
 
+    # расшифвровываем порты, имена модулей, параметры во всех файлах
     change_ind_allf(modules+ports)
-    # запись нового текста в файл
-    fileopen = open(file, "w")
-    fileopen.write(filetext)
-    fileopen.close()
 
-# ф-я деобфускации выбранного вида индентификаторов (input/output/inout, wire, reg, module, instance, parameter)
+    # запись нового текста в файл
+    work_with_files.write_text_to_file(file, filetext)
+
+
+# ф-я деобфускации выбранного вида идентификаторов (input/output/inout, wire, reg, module, instance, parameter)
 def decrypt_one_ind(file, ind):
 
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()  # текст файла
-    fileopen.close()
+    filetext = work_with_files.get_file_text(file)  # текст файла
 
     decrypt_table = get_decrt_in_file(file)  # таблица соответствия
 
-    allind = []  # список всех индентификаторов
+    allind = []  # список всех идентификаторов
 
     # коррекция
     if ind == "input/output/inout":
         ind = "(?:input|output|inout)"
 
-    # если выбранный тип индентификатора - базовый, то проводим соответствующий поиск
+    # если выбранный тип идентификатора - базовый, то проводим соответствующий поиск
     if ind == "(?:input|output|inout)" or ind == "wire" or ind == "reg" or ind == "parameter":
 
-        inouts = obfuscator.search_inouts(filetext)  # список всех input/output/inout индентификаторов
+        inouts = obfuscator.search_inouts(filetext)  # список всех input/output/inout идентификаторов
 
-        # поиск всех input/output/inout индентификаторов
+        # поиск всех input/output/inout идентификаторов
         if ind != "(?:input|output|inout)":
 
-            # поиск всех строк с индентификаторами класса ind
-            allinds_str = re.findall(ind + r" +([\w|\W]*?[,;\n)=])", filetext)
+            # поиск всех строк с идентификаторами класса ind
+            allind = obfuscator.base_ind_search(filetext, [ind])
 
-            # выделение самих индентификаторов из списка allinds_str
-            for i in range(len(allinds_str)):
-                allind += re.findall(r"(\w+) *[,;\n)=]", allinds_str[i])
+            # удаление из списка allind найденных input/output/inout идентификаторов
+            obfuscator.delete_inouts(inouts, allind)
 
-                # выделение индентификаторов, у которпых в конце [\d:\d]
-                allind += re.findall(r"(\w+) +\[[\d :]+][,;\n]", allinds_str[i])
-
-            # удаление из списка allind найденных input/output/inout индентификаторов
-            for i in range(len(inouts)):
-                if inouts[i] in allind:
-                    allind.remove(inouts[i])
         else:
+
             allind = inouts
 
-    # если выбранный тип индентификатора - module или instance, то проводим соответствующий поиск
+    # если выбранный тип идентификатора - module или instance, то проводим соответствующий поиск
     elif ind == "module":
 
-        # поиск индентификаторов модулей
+        # поиск идентификаторов модулей
         allind = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
 
     elif ind == "instance":
@@ -134,7 +119,7 @@ def decrypt_one_ind(file, ind):
         print("literal not correct")
         return
 
-    # замена выбранного класса индентификаторов
+    # замена выбранного класса идентификаторов
     for indef in allind:
         if indef in decrypt_table:
             filetext = re.sub(indef, decrypt_table[indef], filetext)
@@ -144,23 +129,15 @@ def decrypt_one_ind(file, ind):
         change_ind_allf(allind)
 
     # запись нового текста в файл
-    fileopen = open(file, "w")
-    fileopen.write(filetext)
-    fileopen.close()
+    work_with_files.write_text_to_file(file, filetext)
 
 
-# ф-я деобфускации индентификаторов input/output/inout выбранного модуля
+# ф-я деобфускации идентификаторов input/output/inout выбранного модуля
 def decrypt_module_inout(file, module):
 
-    fileopen = open(file, "r")  # открытие файла
-    filetext = fileopen.read()  # текст файла
-    fileopen.close()
+    filetext = work_with_files.get_file_text(file)  # текст файла
 
-    decrypt_file_open = open(file.replace(".sv", "_decrypt_table.txt"), "r")  # открытие файла таблицы соответствия
-    decrypt_file_opentext = decrypt_file_open.read()  # текст таблицы соответствия
-    decrypt_file_open.close()
-
-    decrypt_table = ast.literal_eval(decrypt_file_opentext)  # таблица соответствия
+    decrypt_table = get_decrt_in_file(file)  # таблица соответствия
 
     moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule", filetext)
 
@@ -171,15 +148,13 @@ def decrypt_module_inout(file, module):
 
         inouts = obfuscator.search_inouts(moduletext)
 
-        # замена выбранного класса индентификаторов
+        # замена выбранного класса идентификаторов
         for ind in inouts:
             if ind in decrypt_table:
                 filetext = re.sub(ind, decrypt_table[ind], filetext)
 
         # запись нового текста в файл
-        fileopen = open(file, "w")
-        fileopen.write(filetext)
-        fileopen.close()
+        work_with_files.write_text_to_file(file, filetext)
 
         # заменяем порты в других файлах
         change_ind_allf(inouts)
@@ -189,6 +164,8 @@ def decrypt_module_inout(file, module):
         print(module + " in " + file + " not found")
         return
 
+
+# ------------------------------ВСПОМОГАТЕЛЬНЫЕ_ФУНКЦИИ------------------------------ #
 
 # ф-я получения таблицы соответствия из файла (file - файл самого кода)
 def get_decrt_in_file(file):
@@ -217,15 +194,17 @@ def get_decrt_in_file(file):
         return decrypt_table
     else:
         return None
+
+
+# ф-я дешифрации некотрых идентификаторов во всех файлах проекта
 def change_ind_allf(identifiers):
 
     for file in allfiles:
 
-        fileopen = open(file, "r")  # открытие файла
-        filetext = fileopen.read()  # текст файла
-        fileopen.close()
+        filetext = work_with_files.get_file_text(file)  # текст файла
 
         decrypt_table = get_decrt_in_file(file)
+
         if decrypt_table:
 
             for ind in identifiers:
@@ -233,8 +212,7 @@ def change_ind_allf(identifiers):
                     filetext = filetext.replace(ind, decrypt_table[ind])
 
             # запись измененного текста в файл
-            fileopen = open(file, "w")  # открытие файла
-            fileopen.write(filetext)
-            fileopen.close()
+            work_with_files.write_text_to_file(file, filetext)
         else:
+
             continue

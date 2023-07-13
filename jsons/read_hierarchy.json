@@ -1,11 +1,11 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":false,
+             "a":false,
+             "b":true,
              "c":false
 
           },
 
-  "report_filename" : "report"
+  "report_filename" : "report.txt"
 }

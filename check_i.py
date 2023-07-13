@@ -1,10 +1,10 @@
+# скрипт проверки правильности работы чтения иерархии после обфускации
+# переводит обфксцированные обьекты в файле отчета (report.txt) в обычные
 import os
 import re
-
 import deobfuscator
 import work_with_files
-
-files = scanfiles.get_sv_files(os.curdir)
+files = work_with_files.get_sv_files(os.curdir)
 tables = []
 
 
@@ -31,6 +31,7 @@ def scan_tables(dir, svfiles):
     for path in dirpathes:
         scan_tables(dir + "\\" + path, svfiles)
 
+
 def launch():
     scan_tables(os.curdir, tables)
     for file in files:
@@ -44,7 +45,6 @@ def launch():
     filetext = fileopen.read()
     fileopen.close()
 
-    words = re.findall(r"\W\w+", filetext)
 
     for table in tables:
         table_struct = deobfuscator.get_decrt_in_file(table.replace("_decrypt_table.txt", ".sv"))
