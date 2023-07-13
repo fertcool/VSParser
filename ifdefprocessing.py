@@ -1,5 +1,5 @@
-# СКРИПТ РАБОТЫ С IFDEF/IFNDEF ВЕТКАМИ И ВКЛЮЧЕНИЯ INCLUDE ФАЙЛОВ
-# настройка конфигурации осуществляется в "ifdefprocessing.json"
+# РЎРљР РРџРў Р РђР‘РћРўР« РЎ IFDEF/IFNDEF Р’Р•РўРљРђРњР Р Р’РљР›Р®Р§Р•РќРРЇ INCLUDE Р¤РђР™Р›РћР’
+# РЅР°СЃС‚СЂРѕР№РєР° РєРѕРЅС„РёРіСѓСЂР°С†РёРё РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ РІ "ifdefprocessing.json"
 
 import json
 import os
@@ -8,84 +8,84 @@ import work_with_files
 import erase_comments
 
 
-# ------------------------------ЗАПУСК_СКРИПТА------------------------------ #
+# ------------------------------Р—РђРџРЈРЎРљ_РЎРљР РРџРўРђ------------------------------ #
 
-# ф-я запускающая препроцессинг sv файлов
+# С„-СЏ Р·Р°РїСѓСЃРєР°СЋС‰Р°СЏ РїСЂРµРїСЂРѕС†РµСЃСЃРёРЅРі sv С„Р°Р№Р»РѕРІ
 def launch():
     json_file = open(r"jsons/ifdefprocessing.json", "r")
     json_struct = json.load(json_file)
 
-    files = []  # список файлов для которых проводится работа
+    files = []  # СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ РґР»СЏ РєРѕС‚РѕСЂС‹С… РїСЂРѕРІРѕРґРёС‚СЃСЏ СЂР°Р±РѕС‚Р°
     if json_struct["conf"]["allfiles"]:
-        files = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
+        files = work_with_files.get_sv_files(os.curdir)  # РґРѕР±Р°РІР»СЏРµРј С„Р°Р№Р»С‹ РІСЃРµРіРѕ РїСЂРѕРµРєС‚Р°
     else:
-        files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
+        files.append(json_struct["conf"]["filename"])  # РґРѕР±Р°РІР»СЏРµРј 1 РЅРµРѕР±С…РѕРґРёРјС‹Р№ С„Р°Р№Р»
 
-    # добавление include файлов
+    # РґРѕР±Р°РІР»РµРЅРёРµ include С„Р°Р№Р»РѕРІ
     if json_struct["tasks"]["a"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             include_for_file(file, json_struct)
 
-    # обработка ifdef/ifndef
+    # РѕР±СЂР°Р±РѕС‚РєР° ifdef/ifndef
     if json_struct["tasks"]["b"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             ifdef_pr_forfile(file, json_struct)
 
 
-# ------------------------------ФУНКЦИИ_РАБОТЫ_С_INCLUDE_ФАЙЛАМИ------------------------------ #
+# ------------------------------Р¤РЈРќРљР¦РР_Р РђР‘РћРўР«_РЎ_INCLUDE_Р¤РђР™Р›РђРњР------------------------------ #
 
-# ф-я добавляющая в текст sv файла include файлы (в том числе включая include включаемого файла)
+# С„-СЏ РґРѕР±Р°РІР»СЏСЋС‰Р°СЏ РІ С‚РµРєСЃС‚ sv С„Р°Р№Р»Р° include С„Р°Р№Р»С‹ (РІ С‚РѕРј С‡РёСЃР»Рµ РІРєР»СЋС‡Р°СЏ include РІРєР»СЋС‡Р°РµРјРѕРіРѕ С„Р°Р№Р»Р°)
 def addincludes(json, filetext, included = None):
 
     if included is None:
         included = []
 
-    # поиск всех include в файле (расположенных последовательно)
+    # РїРѕРёСЃРє РІСЃРµС… include РІ С„Р°Р№Р»Рµ (СЂР°СЃРїРѕР»РѕР¶РµРЅРЅС‹С… РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕ)
     includes = re.findall(r"`include *\"([\w\.]+)\"", filetext)
 
-    # цикл по всем включаемым файлам
+    # С†РёРєР» РїРѕ РІСЃРµРј РІРєР»СЋС‡Р°РµРјС‹Рј С„Р°Р№Р»Р°Рј
     for include in includes:
-        existfile = False  # флаг существования включаемого файла
+        existfile = False  # С„Р»Р°Рі СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ РІРєР»СЋС‡Р°РµРјРѕРіРѕ С„Р°Р№Р»Р°
 
-        # цикл по всем директориям, где должны хранится include файлы
+        # С†РёРєР» РїРѕ РІСЃРµРј РґРёСЂРµРєС‚РѕСЂРёСЏРј, РіРґРµ РґРѕР»Р¶РЅС‹ С…СЂР°РЅРёС‚СЃСЏ include С„Р°Р№Р»С‹
         for includepath in json["includes"]:
 
-            # если файл в текущей директоии есть (и он еще не был включен)
-            # , то добавляем текст включаемого файла
+            # РµСЃР»Рё С„Р°Р№Р» РІ С‚РµРєСѓС‰РµР№ РґРёСЂРµРєС‚РѕРёРё РµСЃС‚СЊ (Рё РѕРЅ РµС‰Рµ РЅРµ Р±С‹Р» РІРєР»СЋС‡РµРЅ)
+            # , С‚Рѕ РґРѕР±Р°РІР»СЏРµРј С‚РµРєСЃС‚ РІРєР»СЋС‡Р°РµРјРѕРіРѕ С„Р°Р№Р»Р°
             if os.path.exists(includepath+"\\"+include) and include not in included:
 
-                existfile = True  # флаг существования файла
+                existfile = True  # С„Р»Р°Рі СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёСЏ С„Р°Р№Р»Р°
 
-                includetext = work_with_files.get_file_text(includepath+"\\"+include)  # текст включаемого файла
+                includetext = work_with_files.get_file_text(includepath+"\\"+include)  # С‚РµРєСЃС‚ РІРєР»СЋС‡Р°РµРјРѕРіРѕ С„Р°Р№Р»Р°
 
-                # вставляем в файл на место 1 включения
+                # РІСЃС‚Р°РІР»СЏРµРј РІ С„Р°Р№Р» РЅР° РјРµСЃС‚Рѕ 1 РІРєР»СЋС‡РµРЅРёСЏ
                 filetext = re.sub("`include *\""+include+"\"", includetext, filetext, 1)
 
-                # удаление повторяющихся включений
+                # СѓРґР°Р»РµРЅРёРµ РїРѕРІС‚РѕСЂСЏСЋС‰РёС…СЃСЏ РІРєР»СЋС‡РµРЅРёР№
                 filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
                                   filetext)
 
-                # добавляем вставленный файл в список включенных
+                # РґРѕР±Р°РІР»СЏРµРј РІСЃС‚Р°РІР»РµРЅРЅС‹Р№ С„Р°Р№Р» РІ СЃРїРёСЃРѕРє РІРєР»СЋС‡РµРЅРЅС‹С…
                 included.append(include)
 
-                # заново просматриваем файл (ищем снова включения)
+                # Р·Р°РЅРѕРІРѕ РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј С„Р°Р№Р» (РёС‰РµРј СЃРЅРѕРІР° РІРєР»СЋС‡РµРЅРёСЏ)
                 filetext = addincludes(json, filetext, included)
 
-                # выходим, т.к. уже нашли и вставили файл
+                # РІС‹С…РѕРґРёРј, С‚.Рє. СѓР¶Рµ РЅР°С€Р»Рё Рё РІСЃС‚Р°РІРёР»Рё С„Р°Р№Р»
                 break
 
-        # если включаемый файл не был найден, то оставляем соответствующую пометку и идем к следующему файлу
+        # РµСЃР»Рё РІРєР»СЋС‡Р°РµРјС‹Р№ С„Р°Р№Р» РЅРµ Р±С‹Р» РЅР°Р№РґРµРЅ, С‚Рѕ РѕСЃС‚Р°РІР»СЏРµРј СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰СѓСЋ РїРѕРјРµС‚РєСѓ Рё РёРґРµРј Рє СЃР»РµРґСѓСЋС‰РµРјСѓ С„Р°Р№Р»Сѓ
         if not existfile:
 
-            # добавляем пометку
-            if include not in included:  # если файл не был включен
+            # РґРѕР±Р°РІР»СЏРµРј РїРѕРјРµС‚РєСѓ
+            if include not in included:  # РµСЃР»Рё С„Р°Р№Р» РЅРµ Р±С‹Р» РІРєР»СЋС‡РµРЅ
                 filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file don't exist",
                                   filetext)
-            else:  # если файл был включен
+            else:  # РµСЃР»Рё С„Р°Р№Р» Р±С‹Р» РІРєР»СЋС‡РµРЅ
                 filetext = re.sub("`include *\"" + include + "\"", "//include \"" + include + "\" file already include",
                                   filetext)
             continue
@@ -93,68 +93,68 @@ def addincludes(json, filetext, included = None):
     return filetext
 
 
-# ф-я добавления всех include файлов для 1 файла
+# С„-СЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІСЃРµС… include С„Р°Р№Р»РѕРІ РґР»СЏ 1 С„Р°Р№Р»Р°
 def include_for_file(file, json):
 
     filetext = work_with_files.get_file_text(file)
 
-    # изменяем текст sv файла - заменяем `include на текст соответствующего файла
+    # РёР·РјРµРЅСЏРµРј С‚РµРєСЃС‚ sv С„Р°Р№Р»Р° - Р·Р°РјРµРЅСЏРµРј `include РЅР° С‚РµРєСЃС‚ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РµРіРѕ С„Р°Р№Р»Р°
     filetext = addincludes(json, filetext)
 
-    work_with_files.write_text_to_file(file, filetext)  # запись нового текста в файл
+    work_with_files.write_text_to_file(file, filetext)  # Р·Р°РїРёСЃСЊ РЅРѕРІРѕРіРѕ С‚РµРєСЃС‚Р° РІ С„Р°Р№Р»
 
 
-# ------------------------------ФУНКЦИИ_IFDEF/IFNDEF_ОБРАБОТКИ------------------------------ #
+# ------------------------------Р¤РЈРќРљР¦РР_IFDEF/IFNDEF_РћР‘Р РђР‘РћРўРљР------------------------------ #
 
-# ф-я ifdef/ifndef обработки файла
+# С„-СЏ ifdef/ifndef РѕР±СЂР°Р±РѕС‚РєРё С„Р°Р№Р»Р°
 def ifdef_pr_forfile(file, json):
-    #  удаляем комментарии с определениями
+    #  СѓРґР°Р»СЏРµРј РєРѕРјРјРµРЅС‚Р°СЂРёРё СЃ РѕРїСЂРµРґРµР»РµРЅРёСЏРјРё
     erase_comments.delete(file, [r"/\* *`define *[\s|\S]*?\*/", r"// *`define *[^\n]*\n"], False)
 
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    # цикл пока есть блоки ifdef или ifndef в файле
+    # С†РёРєР» РїРѕРєР° РµСЃС‚СЊ Р±Р»РѕРєРё ifdef РёР»Рё ifndef РІ С„Р°Р№Р»Рµ
     while (re.search(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filetext)):
 
-        # поиск всех блоков ifdef/ifndef (возможно с вложениями)
+        # РїРѕРёСЃРє РІСЃРµС… Р±Р»РѕРєРѕРІ ifdef/ifndef (РІРѕР·РјРѕР¶РЅРѕ СЃ РІР»РѕР¶РµРЅРёСЏРјРё)
         ifdefs = re.findall(r"`(?:ifndef|ifdef)[\s|\S]*?`endif", filetext)
 
-        # убираем вложения, если они есть (например ifdef...ifdef...endif -> ifdef...endif)
+        # СѓР±РёСЂР°РµРј РІР»РѕР¶РµРЅРёСЏ, РµСЃР»Рё РѕРЅРё РµСЃС‚СЊ (РЅР°РїСЂРёРјРµСЂ ifdef...ifdef...endif -> ifdef...endif)
         for i in range(len(ifdefs)):
             ifs = re.findall(r"`(?:ifndef|ifdef) +\w+", ifdefs[i])
             if len(ifs) > 1:
                 ifdefs[i] = re.search(r"[\s|\S]" + ifs[len(ifs) - 1] + r"[\s|\S]*?`endif", ifdefs[i])[0]
                 ifdefs[i] = ifdefs[i][1:]
 
-        # цикл обработки каждого блока
+        # С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё РєР°Р¶РґРѕРіРѕ Р±Р»РѕРєР°
         for ifdef in ifdefs:
 
             index = filetext.find(ifdef)
-            textbefore = filetext[:index]  # текст до блока
+            textbefore = filetext[:index]  # С‚РµРєСЃС‚ РґРѕ Р±Р»РѕРєР°
 
-            defines = re.findall(r"`define +\w+", textbefore)  # все define до блока
-            defines.extend(json["defines"])  # добавляем внешние define
-            # оставляем только названия define
+            defines = re.findall(r"`define +\w+", textbefore)  # РІСЃРµ define РґРѕ Р±Р»РѕРєР°
+            defines.extend(json["defines"])  # РґРѕР±Р°РІР»СЏРµРј РІРЅРµС€РЅРёРµ define
+            # РѕСЃС‚Р°РІР»СЏРµРј С‚РѕР»СЊРєРѕ РЅР°Р·РІР°РЅРёСЏ define
             for i in range(len(defines)):
                 defines[i] = re.sub("`define +", '', defines[i])
                 defines[i] = re.sub("\n", '', defines[i])
 
-            # обработка блока
+            # РѕР±СЂР°Р±РѕС‚РєР° Р±Р»РѕРєР°
             newifdef = ifblockprocessing(ifdef, defines)
 
             filetext = filetext.replace(ifdef, newifdef)
 
-    # убираем лишние отступы
+    # СѓР±РёСЂР°РµРј Р»РёС€РЅРёРµ РѕС‚СЃС‚СѓРїС‹
     filetext = re.sub(r"\n{3,}", "\n\n", filetext)
 
-    # запись в файл кода без лишних блоков ifdef/ifndef
+    # Р·Р°РїРёСЃСЊ РІ С„Р°Р№Р» РєРѕРґР° Р±РµР· Р»РёС€РЅРёС… Р±Р»РѕРєРѕРІ ifdef/ifndef
     work_with_files.write_text_to_file(file, filetext)
 
 
-# ф-я проверяющая 1 блок ifdef/ifndef
+# С„-СЏ РїСЂРѕРІРµСЂСЏСЋС‰Р°СЏ 1 Р±Р»РѕРє ifdef/ifndef
 def ifblockprocessing(blockstr, defines):
 
-    # списки условных деректив блока
+    # СЃРїРёСЃРєРё СѓСЃР»РѕРІРЅС‹С… РґРµСЂРµРєС‚РёРІ Р±Р»РѕРєР°
     ifdef = re.search(r"`(?:ifndef|ifdef) +\w+\n", blockstr)[0]
     elsifs = re.findall(r"`elsif +\w+\n", blockstr)
     else_ = re.search(r"`else", blockstr)
@@ -162,46 +162,46 @@ def ifblockprocessing(blockstr, defines):
     if else_:
         else_ = else_[0]
 
-    # сравниваем макросы ifdef/ifndef с define
+    # СЃСЂР°РІРЅРёРІР°РµРј РјР°РєСЂРѕСЃС‹ ifdef/ifndef СЃ define
     for define in defines:
         if define in ifdef:
-            # если нашли совпадение с define и мы обрабатываем ifdef, то возвращаем код блока
+            # РµСЃР»Рё РЅР°С€Р»Рё СЃРѕРІРїР°РґРµРЅРёРµ СЃ define Рё РјС‹ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј ifdef, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј РєРѕРґ Р±Р»РѕРєР°
             if "ifdef" in ifdef:
                 blockstr = cleanblock(blockstr, ifdef)
                 return blockstr
-            # если нашли совпадение с define и мы обрабатываем ifndef
+            # РµСЃР»Рё РЅР°С€Р»Рё СЃРѕРІРїР°РґРµРЅРёРµ СЃ define Рё РјС‹ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј ifndef
             else:
-                return ""  # возращаем пустоту (т.е. блок ifndef удалится)
+                return ""  # РІРѕР·СЂР°С‰Р°РµРј РїСѓСЃС‚РѕС‚Сѓ (С‚.Рµ. Р±Р»РѕРє ifndef СѓРґР°Р»РёС‚СЃСЏ)
 
-    # если совпадений с define не было найдено и мы обрабатываем ifndef, то
-    # возращаем код блока
+    # РµСЃР»Рё СЃРѕРІРїР°РґРµРЅРёР№ СЃ define РЅРµ Р±С‹Р»Рѕ РЅР°Р№РґРµРЅРѕ Рё РјС‹ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј ifndef, С‚Рѕ
+    # РІРѕР·СЂР°С‰Р°РµРј РєРѕРґ Р±Р»РѕРєР°
     if "ifndef" in ifdef:
         blockstr = cleanblock(blockstr, ifdef)
         return blockstr
 
-    # сравниваем elsif с define
+    # СЃСЂР°РІРЅРёРІР°РµРј elsif СЃ define
     for define in defines:
         for elsif in elsifs:
             if define in elsif:
-                # если нашли совпадение, то возвращаем код блока elsif
+                # РµСЃР»Рё РЅР°С€Р»Рё СЃРѕРІРїР°РґРµРЅРёРµ, С‚Рѕ РІРѕР·РІСЂР°С‰Р°РµРј РєРѕРґ Р±Р»РѕРєР° elsif
                 blockstr = cleanblock(blockstr, elsif)
                 return blockstr
 
-    # отдаем блок с else
+    # РѕС‚РґР°РµРј Р±Р»РѕРє СЃ else
     if else_:
         blockstr = cleanblock(blockstr, else_)
         return blockstr
 
-    # если не нашли никаких совпадений, возвращаем пустоту
+    # РµСЃР»Рё РЅРµ РЅР°С€Р»Рё РЅРёРєР°РєРёС… СЃРѕРІРїР°РґРµРЅРёР№, РІРѕР·РІСЂР°С‰Р°РµРј РїСѓСЃС‚РѕС‚Сѓ
     return ""
 
 
-# ф-я возвращающая внутренний код блока
+# С„-СЏ РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ РІРЅСѓС‚СЂРµРЅРЅРёР№ РєРѕРґ Р±Р»РѕРєР°
 def cleanblock(block, face):
 
     blockwithface = re.search(face + r"[\s|\S]*?`elsif", block)
 
-    if blockwithface:  # если блок с elsif концом
+    if blockwithface:  # РµСЃР»Рё Р±Р»РѕРє СЃ elsif РєРѕРЅС†РѕРј
         blockwithface = blockwithface[0]
         blockwithface = re.sub(face, '', blockwithface)
         blockwithface = re.sub("`elsif", '', blockwithface)
@@ -209,12 +209,12 @@ def cleanblock(block, face):
 
         blockwithface = re.search(face + r"[\s|\S]*?`else", block)
 
-        if blockwithface:  # если блок с else концом
+        if blockwithface:  # РµСЃР»Рё Р±Р»РѕРє СЃ else РєРѕРЅС†РѕРј
             blockwithface = blockwithface[0]
             blockwithface = re.sub(face, '', blockwithface)
             blockwithface = re.sub("`else", '', blockwithface)
 
-        else:  # если блок с endif концом
+        else:  # РµСЃР»Рё Р±Р»РѕРє СЃ endif РєРѕРЅС†РѕРј
             blockwithface = re.search(face + r"[\s|\S]*?`endif", block)
             blockwithface = blockwithface[0]
             blockwithface = re.sub(face, '', blockwithface)

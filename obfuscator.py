@@ -1,7 +1,7 @@
-# СКРИПТ ОБФУСКАЦИИ ФАЙЛОВ
-# настройка конфигурации осуществляется в "obfuscator.json"
+# РЎРљР РРџРў РћР‘Р¤РЈРЎРљРђР¦РР Р¤РђР™Р›РћР’
+# РЅР°СЃС‚СЂРѕР№РєР° РєРѕРЅС„РёРіСѓСЂР°С†РёРё РѕСЃСѓС‰РµСЃС‚РІР»СЏРµС‚СЃСЏ РІ "obfuscator.json"
 
-# обфускация производится над идентификаторами:
+# РѕР±С„СѓСЃРєР°С†РёСЏ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РЅР°Рґ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°РјРё:
 # input / output / inout
 # wire / reg
 # module / function / task
@@ -12,7 +12,7 @@
 # event
 # enum / typedef
 # `define
-# обфускация не производится над вызовами instance обьектов через "."
+# РѕР±С„СѓСЃРєР°С†РёСЏ РЅРµ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РЅР°Рґ РІС‹Р·РѕРІР°РјРё instance РѕР±СЊРµРєС‚РѕРІ С‡РµСЂРµР· "."
 
 
 import json
@@ -25,79 +25,79 @@ import ifdefprocessing
 import work_with_files
 
 
-# ------------------------------ЗАПУСК_ОБФУСКАЦИИ------------------------------ #
+# ------------------------------Р—РђРџРЈРЎРљ_РћР‘Р¤РЈРЎРљРђР¦РР------------------------------ #
 
 def launch():
     json_file = open(r"jsons/obfuscator.json", "r")
     json_struct = json.load(json_file)
 
-    files = []  # список файлов для которых проводится работа
+    files = []  # СЃРїРёСЃРѕРє С„Р°Р№Р»РѕРІ РґР»СЏ РєРѕС‚РѕСЂС‹С… РїСЂРѕРІРѕРґРёС‚СЃСЏ СЂР°Р±РѕС‚Р°
     if json_struct["conf"]["allfiles"]:
-        files = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
+        files = work_with_files.get_sv_files(os.curdir)  # РґРѕР±Р°РІР»СЏРµРј С„Р°Р№Р»С‹ РІСЃРµРіРѕ РїСЂРѕРµРєС‚Р°
     else:
-        files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
+        files.append(json_struct["conf"]["filename"])  # РґРѕР±Р°РІР»СЏРµРј 1 РЅРµРѕР±С…РѕРґРёРјС‹Р№ С„Р°Р№Р»
 
-    # обфускация по всем идентификаторам
+    # РѕР±С„СѓСЃРєР°С†РёСЏ РїРѕ РІСЃРµРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°Рј
     if json_struct["tasks"]["a"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             allind_search_and_replace(file)
 
-    # обфускация по выбранному классу идентификаторов (input/output/inout, wire, reg, module, instance, parameter)
+    # РѕР±С„СѓСЃРєР°С†РёСЏ РїРѕ РІС‹Р±СЂР°РЅРЅРѕРјСѓ РєР»Р°СЃСЃСѓ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ (input/output/inout, wire, reg, module, instance, parameter)
     if json_struct["tasks"]["b"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             ind_search_and_replace(file, json_struct["literalclass"])
 
-    # обфускация по идентификаторам input/output/inout в заданном модуле
+    # РѕР±С„СѓСЃРєР°С†РёСЏ РїРѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°Рј input/output/inout РІ Р·Р°РґР°РЅРЅРѕРј РјРѕРґСѓР»Рµ
     if json_struct["tasks"]["c"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             module_search_and_replace_wo_inout(file, json_struct["module"])
 
-    # обфускация в рамках (protect on - protect off)
+    # РѕР±С„СѓСЃРєР°С†РёСЏ РІ СЂР°РјРєР°С… (protect on - protect off)
     if json_struct["tasks"]["d"]:
 
-        # цикл по всем файлам
+        # С†РёРєР» РїРѕ РІСЃРµРј С„Р°Р№Р»Р°Рј
         for file in files:
             ind_search_and_replace_protect(file)
 
 
-# ------------------------------ОСНОВНЫЕ_ФУНКЦИИ------------------------------ #
+# ------------------------------РћРЎРќРћР’РќР«Р•_Р¤РЈРќРљР¦РР------------------------------ #
 
-# ф-я обфускации текста в пределах `pragma protect on - `pragma protect off
+# С„-СЏ РѕР±С„СѓСЃРєР°С†РёРё С‚РµРєСЃС‚Р° РІ РїСЂРµРґРµР»Р°С… `pragma protect on - `pragma protect off
 def ind_search_and_replace_protect(file):
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    # текст обрабатываемого блока кода
+    # С‚РµРєСЃС‚ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРіРѕ Р±Р»РѕРєР° РєРѕРґР°
     protectblocks = re.findall(r"`pragma protect on([\w|\W]+?)`pragma protect off", filetext)
 
     if protectblocks:
-        # обработка ifdef/ifndef
+        # РѕР±СЂР°Р±РѕС‚РєР° ifdef/ifndef
         preobfuscator_ifdef(file)
 
-        filetext = work_with_files.get_file_text(file)  # текст всего файла после обработки ifdef/ifndef
+        filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ РІСЃРµРіРѕ С„Р°Р№Р»Р° РїРѕСЃР»Рµ РѕР±СЂР°Р±РѕС‚РєРё ifdef/ifndef
 
-        # повторяем поиск, т.к. провели обработку ifdef/ifndef
+        # РїРѕРІС‚РѕСЂСЏРµРј РїРѕРёСЃРє, С‚.Рє. РїСЂРѕРІРµР»Рё РѕР±СЂР°Р±РѕС‚РєСѓ ifdef/ifndef
         protectblocks = re.findall(r"`pragma protect on([\w|\W]+?)`pragma protect off", filetext)
 
-        # цикл обработки блоков кода
+        # С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё Р±Р»РѕРєРѕРІ РєРѕРґР°
         for protectblock in protectblocks:
-            filetext = work_with_files.get_file_text(file)  # текст всего файла после обработки ifdef/ifndef
+            filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ РІСЃРµРіРѕ С„Р°Р№Р»Р° РїРѕСЃР»Рµ РѕР±СЂР°Р±РѕС‚РєРё ifdef/ifndef
 
-            # запись в файл текста protect блока
+            # Р·Р°РїРёСЃСЊ РІ С„Р°Р№Р» С‚РµРєСЃС‚Р° protect Р±Р»РѕРєР°
             work_with_files.write_text_to_file(file, protectblock)
 
-            # заменяем все идентификаторы в protect блоке
+            # Р·Р°РјРµРЅСЏРµРј РІСЃРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РІ protect Р±Р»РѕРєРµ
             allind_search_and_replace(file)
 
-            # чтение нового текста модуля из файла
+            # С‡С‚РµРЅРёРµ РЅРѕРІРѕРіРѕ С‚РµРєСЃС‚Р° РјРѕРґСѓР»СЏ РёР· С„Р°Р№Р»Р°
             newprotectblock = work_with_files.get_file_text(file)
 
-            # запись в файл текста с обработанным protect блоком
+            # Р·Р°РїРёСЃСЊ РІ С„Р°Р№Р» С‚РµРєСЃС‚Р° СЃ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рј protect Р±Р»РѕРєРѕРј
             work_with_files.write_text_to_file(file, filetext.replace("`pragma protect on" + protectblock
                                                                       + "`pragma protect off", newprotectblock))
 
@@ -105,48 +105,48 @@ def ind_search_and_replace_protect(file):
         return
 
 
-# ф-я поиска и замены любых идентификаторов, кроме input/output/inout в заданном модуле
+# С„-СЏ РїРѕРёСЃРєР° Рё Р·Р°РјРµРЅС‹ Р»СЋР±С‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ, РєСЂРѕРјРµ input/output/inout РІ Р·Р°РґР°РЅРЅРѕРј РјРѕРґСѓР»Рµ
 def module_search_and_replace_wo_inout(file, module):
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
     moduleblock = re.search(r"\Wmodule +" + module + r"[\w|\W]+?endmodule", filetext)
 
-    # если нашли модуль, то обрабатываем его
+    # РµСЃР»Рё РЅР°С€Р»Рё РјРѕРґСѓР»СЊ, С‚Рѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РµРіРѕ
     if moduleblock:
 
-        # обработка ifdef/ifndef
+        # РѕР±СЂР°Р±РѕС‚РєР° ifdef/ifndef
         preobfuscator_ifdef(file)
 
-        moduletext = re.search(r"\Wmodule +" + module + r"[\w|\W]+?endmodule", filetext)[0]  # текст блока модуля
+        moduletext = re.search(r"\Wmodule +" + module + r"[\w|\W]+?endmodule", filetext)[0]  # С‚РµРєСЃС‚ Р±Р»РѕРєР° РјРѕРґСѓР»СЏ
 
-        # запись модуля в текст (на замену старому коду будет только обрабатываемый модуль)
+        # Р·Р°РїРёСЃСЊ РјРѕРґСѓР»СЏ РІ С‚РµРєСЃС‚ (РЅР° Р·Р°РјРµРЅСѓ СЃС‚Р°СЂРѕРјСѓ РєРѕРґСѓ Р±СѓРґРµС‚ С‚РѕР»СЊРєРѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјС‹Р№ РјРѕРґСѓР»СЊ)
         work_with_files.write_text_to_file(file, moduletext)
 
-        # шифруем блоки instance, чтобы они не участвовали далее в обрвботке
-        decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+        # С€РёС„СЂСѓРµРј Р±Р»РѕРєРё instance, С‡С‚РѕР±С‹ РѕРЅРё РЅРµ СѓС‡Р°СЃС‚РІРѕРІР°Р»Рё РґР°Р»РµРµ РІ РѕР±СЂРІР±РѕС‚РєРµ
+        decrypt_table_instances = preobfuscator_instance(file)  # С‚Р°Р±Р»РёС†Р° РґРµС€РёС„СЂР°С†РёРё Р±Р»РѕРєРѕРІ instance
 
-        newmoduletext = work_with_files.get_file_text(file)  # текст модуля после шифровки instance обьектов
+        newmoduletext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ РјРѕРґСѓР»СЏ РїРѕСЃР»Рµ С€РёС„СЂРѕРІРєРё instance РѕР±СЊРµРєС‚РѕРІ
 
-        # instance идентификаторы (имена)
+        # instance РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ (РёРјРµРЅР°)
         instances = search_instances(file)
 
-        inouts = search_inouts(newmoduletext)  # список всех input/output/inout идентификаторов
+        inouts = search_inouts(newmoduletext)  # СЃРїРёСЃРѕРє РІСЃРµС… input/output/inout РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 
-        defines = re.findall(r"`define +(\w+)", newmoduletext)  # список идентификаторов define
+        defines = re.findall(r"`define +(\w+)", newmoduletext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ define
 
-        # список строк с определением или инициализацией базовых идентификаторов
-        # в группе хранятся списки идентификаторов
+        # СЃРїРёСЃРѕРє СЃС‚СЂРѕРє СЃ РѕРїСЂРµРґРµР»РµРЅРёРµРј РёР»Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёРµР№ Р±Р°Р·РѕРІС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
+        # РІ РіСЂСѓРїРїРµ С…СЂР°РЅСЏС‚СЃСЏ СЃРїРёСЃРєРё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
         base = base_ind_search(newmoduletext, ["wire", "reg", "parameter", "localparam", "byte", "shortint",
                                                "int", "integer", "longint", "bit", "logic", "shortreal",
                                                "real", "realtime", "time", "event"])
 
-        enums = enum_ind_search(newmoduletext)  # идентификаторы enums
+        enums = enum_ind_search(newmoduletext)  # РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ enums
 
-        structs = re.findall(r"\Wstruct[\w|\W]+?} *(\w+);", newmoduletext)  # список идентификаторов struct
+        structs = re.findall(r"\Wstruct[\w|\W]+?} *(\w+);", newmoduletext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ struct
 
-        typedefs = re.findall(r"\Wtypedef[\w|\W]+?} *(\w+);", newmoduletext)  # список идентификаторов typedef
+        typedefs = re.findall(r"\Wtypedef[\w|\W]+?} *(\w+);", newmoduletext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ typedef
 
-        # удаление повторных идентификаторов typedef из enums и struct
+        # СѓРґР°Р»РµРЅРёРµ РїРѕРІС‚РѕСЂРЅС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ typedef РёР· enums Рё struct
         for a in structs:
             if a in typedefs:
                 structs.remove(a)
@@ -154,234 +154,234 @@ def module_search_and_replace_wo_inout(file, module):
             if a in typedefs:
                 enums.remove(a)
 
-        # поиск идентификаторов, типа typedef'ов
+        # РїРѕРёСЃРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ, С‚РёРїР° typedef'РѕРІ
         for typedef in typedefs:
             base_typedef = re.findall(typedef + r" +(.*?[,;\n)=])", newmoduletext)
             for i in range(len(base_typedef)):
-                base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных идентификаторов в base
+                base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # РґРѕР±Р°РІР»РµРЅРёРµ РЅР°Р№РґРµРЅРЅС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІ base
 
-        # поиск идентификаторов функций
+        # РїРѕРёСЃРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ С„СѓРЅРєС†РёР№
         module_ind = re.findall(r"\W(?:function|task)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", newmoduletext)
 
-        # все идентификаторы (без повторов)
-        allind = set(defines + base + enums + structs + typedefs + module_ind + instances)  # все идентификаторы
+        # РІСЃРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ (Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
+        allind = set(defines + base + enums + structs + typedefs + module_ind + instances)  # РІСЃРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹
 
-        # удаление из списка allind найденных input/output/inout идентификаторов
+        # СѓРґР°Р»РµРЅРёРµ РёР· СЃРїРёСЃРєР° allind РЅР°Р№РґРµРЅРЅС‹С… input/output/inout РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
         delete_inouts(inouts, allind)
 
-        # шифровка идентификаторов и создание таблицы соответствия
+        # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Рё СЃРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         decrypt_table = {}
         encrypt_file(allind, file, newmoduletext, decrypt_table)
 
-        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
 
-        # проверяем есть ли в модуле параметры
+        # РїСЂРѕРІРµСЂСЏРµРј РµСЃС‚СЊ Р»Рё РІ РјРѕРґСѓР»Рµ РїР°СЂР°РјРµС‚СЂС‹
         modules = re.findall(r"\Wmodule[\w|\W]*?(\w+)[ \n]*?#\(",
-                             newmoduletext)  # список модулей, описанных в тексте файла
-        # если нашли, то заменяем их в других файлах
+                             newmoduletext)  # СЃРїРёСЃРѕРє РјРѕРґСѓР»РµР№, РѕРїРёСЃР°РЅРЅС‹С… РІ С‚РµРєСЃС‚Рµ С„Р°Р№Р»Р°
+        # РµСЃР»Рё РЅР°С€Р»Рё, С‚Рѕ Р·Р°РјРµРЅСЏРµРј РёС… РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…
         if modules:
-            # заменяем все instance блоки в других файлах (именно параметры)
+            # Р·Р°РјРµРЅСЏРµРј РІСЃРµ instance Р±Р»РѕРєРё РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С… (РёРјРµРЅРЅРѕ РїР°СЂР°РјРµС‚СЂС‹)
             change_instances_ports_allf(modules, inv_decrypt_table)
 
-        # чтение нового текста модуля из файла
+        # С‡С‚РµРЅРёРµ РЅРѕРІРѕРіРѕ С‚РµРєСЃС‚Р° РјРѕРґСѓР»СЏ РёР· С„Р°Р№Р»Р°
         newmoduletext = work_with_files.get_file_text(file)
 
-        # дешифруем instance блоки
+        # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
         for decr_inst in decrypt_table_instances:
             newmoduletext = newmoduletext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-        # заменяем идентификаторы instance
+        # Р·Р°РјРµРЅСЏРµРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ instance
         for inst in instances:
             newmoduletext = re.sub(inst + r" *\(", inv_decrypt_table[inst] + "(", newmoduletext)
 
-        # создаем файл с таблицей соответствия
+        # СЃРѕР·РґР°РµРј С„Р°Р№Р» СЃ С‚Р°Р±Р»РёС†РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         write_decrt_in_file(file, decrypt_table)
 
-        # запись в файл текст с обработанным блоком module
+        # Р·Р°РїРёСЃСЊ РІ С„Р°Р№Р» С‚РµРєСЃС‚ СЃ РѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рј Р±Р»РѕРєРѕРј module
         work_with_files.write_text_to_file(file, filetext.replace(moduletext, newmoduletext))
     else:
         print(module + " in " + file + " not found")
         return
 
 
-# ф-я поиска и замены выбранного вида идентификаторов (input/output/inout, wire, reg, module, instance, parameter)
+# С„-СЏ РїРѕРёСЃРєР° Рё Р·Р°РјРµРЅС‹ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РІРёРґР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ (input/output/inout, wire, reg, module, instance, parameter)
 def ind_search_and_replace(file, ind):
-    # обработка ifdef/ifndef
+    # РѕР±СЂР°Р±РѕС‚РєР° ifdef/ifndef
     preobfuscator_ifdef(file)
 
-    # шифруем блоки instance, чтобы они не участвовали далее в обработке
-    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+    # С€РёС„СЂСѓРµРј Р±Р»РѕРєРё instance, С‡С‚РѕР±С‹ РѕРЅРё РЅРµ СѓС‡Р°СЃС‚РІРѕРІР°Р»Рё РґР°Р»РµРµ РІ РѕР±СЂР°Р±РѕС‚РєРµ
+    decrypt_table_instances = preobfuscator_instance(file)  # С‚Р°Р±Р»РёС†Р° РґРµС€РёС„СЂР°С†РёРё Р±Р»РѕРєРѕРІ instance
 
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    decrypt_table = {}  # таблица соответствия для замененных идентификаторов
+    decrypt_table = {}  # С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РґР»СЏ Р·Р°РјРµРЅРµРЅРЅС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 
-    allind = []  # список всех идентификаторов
+    allind = []  # СЃРїРёСЃРѕРє РІСЃРµС… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 
-    # коррекция
+    # РєРѕСЂСЂРµРєС†РёСЏ
     if ind == "input/output/inout":
         ind = "(?:input|output|inout)"
 
-    # если выбранный тип идентификатора - "базовый", то проводим соответствующий поиск
+    # РµСЃР»Рё РІС‹Р±СЂР°РЅРЅС‹Р№ С‚РёРї РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР° - "Р±Р°Р·РѕРІС‹Р№", С‚Рѕ РїСЂРѕРІРѕРґРёРј СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ РїРѕРёСЃРє
     if ind == "(?:input|output|inout)" or ind == "wire" or ind == "reg" or ind == "parameter":
 
-        # поиск всех идентификаторов типа ind
+        # РїРѕРёСЃРє РІСЃРµС… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ С‚РёРїР° ind
         allind = base_ind_search(filetext, [ind])
 
-        # обрабатываем не порты
+        # РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РЅРµ РїРѕСЂС‚С‹
         if ind != "(?:input|output|inout)":
 
-            # обрабатываем parameter
+            # РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј parameter
             if ind == "parameter":
 
-                # шифровка идентификаторов
+                # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
                 encrypt_file(allind, file, filetext, decrypt_table)
 
-                # ищем модули с параметрами
+                # РёС‰РµРј РјРѕРґСѓР»Рё СЃ РїР°СЂР°РјРµС‚СЂР°РјРё
                 modules = re.findall(r"\Wmodule[\w|\W]*?(\w+)[ \n]*?#\(",
-                                     filetext)  # список модулей, описанных в тексте файла
-                # если нашли, то заменяем их в других файлах
+                                     filetext)  # СЃРїРёСЃРѕРє РјРѕРґСѓР»РµР№, РѕРїРёСЃР°РЅРЅС‹С… РІ С‚РµРєСЃС‚Рµ С„Р°Р№Р»Р°
+                # РµСЃР»Рё РЅР°С€Р»Рё, С‚Рѕ Р·Р°РјРµРЅСЏРµРј РёС… РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…
                 if modules:
-                    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+                    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
 
-                    # заменяем все instance блоки в других файлах (именно параметры)
+                    # Р·Р°РјРµРЅСЏРµРј РІСЃРµ instance Р±Р»РѕРєРё РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С… (РёРјРµРЅРЅРѕ РїР°СЂР°РјРµС‚СЂС‹)
                     change_instances_ports_allf(modules, inv_decrypt_table)
 
-                # создаем файл с таблицей соответствия
+                # СЃРѕР·РґР°РµРј С„Р°Р№Р» СЃ С‚Р°Р±Р»РёС†РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
                 write_decrt_in_file(file, decrypt_table)
 
-                filetext = work_with_files.get_file_text(file)  # текст файла
+                filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-                # дешифруем instance блоки
+                # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
                 for decr_inst in decrypt_table_instances:
                     filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-                # запись обфусцированного текста
+                # Р·Р°РїРёСЃСЊ РѕР±С„СѓСЃС†РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
                 work_with_files.write_text_to_file(file, filetext)
 
-            # обрабатываем reg, wire
+            # РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј reg, wire
             else:
                 inouts = search_inouts(filetext)
 
-                # удаляем input/output/inout порты из allind
+                # СѓРґР°Р»СЏРµРј input/output/inout РїРѕСЂС‚С‹ РёР· allind
                 delete_inouts(inouts, allind)
 
-                # шифровка идентификаторов и создание таблицы соответствия
+                # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Рё СЃРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
                 encrypt_file(allind, file, filetext, decrypt_table)
                 write_decrt_in_file(file, decrypt_table)
 
-        # если обрабатываем input/output/inout порты, то надо в других файлах обработать порты instance
-        # обьектов соответсвующих модулей
+        # РµСЃР»Рё РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј input/output/inout РїРѕСЂС‚С‹, С‚Рѕ РЅР°РґРѕ РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С… РѕР±СЂР°Р±РѕС‚Р°С‚СЊ РїРѕСЂС‚С‹ instance
+        # РѕР±СЊРµРєС‚РѕРІ СЃРѕРѕС‚РІРµС‚СЃРІСѓСЋС‰РёС… РјРѕРґСѓР»РµР№
         else:
-            # шифровка идентификаторов
+            # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
             encrypt_file(allind, file, filetext, decrypt_table)
 
-            inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+            inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
 
             modules = re.findall(r"\Wmodule[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()",
-                                 filetext)  # список модулей, описанных в тексте файла
+                                 filetext)  # СЃРїРёСЃРѕРє РјРѕРґСѓР»РµР№, РѕРїРёСЃР°РЅРЅС‹С… РІ С‚РµРєСЃС‚Рµ С„Р°Р№Р»Р°
 
-            # заменяем все instance блоки в других файлах, тк мы изменили названия портов функций modules
+            # Р·Р°РјРµРЅСЏРµРј РІСЃРµ instance Р±Р»РѕРєРё РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…, С‚Рє РјС‹ РёР·РјРµРЅРёР»Рё РЅР°Р·РІР°РЅРёСЏ РїРѕСЂС‚РѕРІ С„СѓРЅРєС†РёР№ modules
             change_instances_ports_allf(modules, inv_decrypt_table)
 
-            filetext = work_with_files.get_file_text(file)  # текст файла
+            filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-            # создаем файл с таблицей соответствия
+            # СЃРѕР·РґР°РµРј С„Р°Р№Р» СЃ С‚Р°Р±Р»РёС†РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
             write_decrt_in_file(file, decrypt_table)
 
-            # дешифруем instance блоки
+            # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
             for decr_inst in decrypt_table_instances:
                 filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-            # запись обфусцированного текста
+            # Р·Р°РїРёСЃСЊ РѕР±С„СѓСЃС†РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
             work_with_files.write_text_to_file(file, filetext)
 
-    # если выбранный тип идентификатора module - то заменяем идентификаторы модулей и тип
-    # instance обьектов в других файлах
+    # РµСЃР»Рё РІС‹Р±СЂР°РЅРЅС‹Р№ С‚РёРї РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР° module - С‚Рѕ Р·Р°РјРµРЅСЏРµРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ РјРѕРґСѓР»РµР№ Рё С‚РёРї
+    # instance РѕР±СЊРµРєС‚РѕРІ РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…
     elif ind == "module":
 
-        # поиск идентификаторов модулей
+        # РїРѕРёСЃРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РјРѕРґСѓР»РµР№
         allind = re.findall(r"\Wmodule[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
 
-        # шифровка идентификаторов
+        # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
         encrypt_file(allind, file, filetext, decrypt_table)
 
-        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
 
-        # заменяем все типы instance блоков в других файлах
+        # Р·Р°РјРµРЅСЏРµРј РІСЃРµ С‚РёРїС‹ instance Р±Р»РѕРєРѕРІ РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…
         change_instances_ports_allf(allind, inv_decrypt_table)
 
-        # создаем файл с таблицей соответствия
+        # СЃРѕР·РґР°РµРј С„Р°Р№Р» СЃ С‚Р°Р±Р»РёС†РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         write_decrt_in_file(file, decrypt_table)
 
-        filetext = work_with_files.get_file_text(file)  # текст файла
+        filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-        # дешифруем instance блоки
+        # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
         for decr_inst in decrypt_table_instances:
             filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-        # запись обфусцированного текста
+        # Р·Р°РїРёСЃСЊ РѕР±С„СѓСЃС†РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
         work_with_files.write_text_to_file(file, filetext)
 
-    # замена instance идентификаторов
+    # Р·Р°РјРµРЅР° instance РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
     elif ind == "instance":
 
-        # дешифруем instance блоки
+        # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
         for decr_inst in decrypt_table_instances:
             filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-        # запись текста после дешифрации
+        # Р·Р°РїРёСЃСЊ С‚РµРєСЃС‚Р° РїРѕСЃР»Рµ РґРµС€РёС„СЂР°С†РёРё
         work_with_files.write_text_to_file(file, filetext)
 
-        # поиск всех instance идентификаторов
+        # РїРѕРёСЃРє РІСЃРµС… instance РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
         allind = search_instances(file)
 
-        # шифровка instance идентификаторов и создание таблицы соответствия
+        # С€РёС„СЂРѕРІРєР° instance РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Рё СЃРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         encrypt_text(allind, "", decrypt_table)
-        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+        inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         for inst in allind:
             filetext = re.sub(inst + r" *\(", inv_decrypt_table[inst] + "(", filetext)
 
-        # запись обфусцированного текста
+        # Р·Р°РїРёСЃСЊ РѕР±С„СѓСЃС†РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
         work_with_files.write_text_to_file(file, filetext)
 
         write_decrt_in_file(file, decrypt_table)
 
-    # ошибка
+    # РѕС€РёР±РєР°
     else:
         print("literal not correct")
         return
 
 
-# ф-я поиска и замены любых идентификаторов
+# С„-СЏ РїРѕРёСЃРєР° Рё Р·Р°РјРµРЅС‹ Р»СЋР±С‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 def allind_search_and_replace(file):
-    # обработка ifdef/ifndef
+    # РѕР±СЂР°Р±РѕС‚РєР° ifdef/ifndef
     preobfuscator_ifdef(file)
 
-    # instance идентификаторы (имена)
+    # instance РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ (РёРјРµРЅР°)
     instances = search_instances(file)
 
-    # шифруем блоки instance, чтобы они не участвовали далее в обрвботке
-    decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
+    # С€РёС„СЂСѓРµРј Р±Р»РѕРєРё instance, С‡С‚РѕР±С‹ РѕРЅРё РЅРµ СѓС‡Р°СЃС‚РІРѕРІР°Р»Рё РґР°Р»РµРµ РІ РѕР±СЂРІР±РѕС‚РєРµ
+    decrypt_table_instances = preobfuscator_instance(file)  # С‚Р°Р±Р»РёС†Р° РґРµС€РёС„СЂР°С†РёРё Р±Р»РѕРєРѕРІ instance
 
-    filetext = work_with_files.get_file_text(file)  # текст файла после ifdef обработки и шифровки instance обьектов
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р° РїРѕСЃР»Рµ ifdef РѕР±СЂР°Р±РѕС‚РєРё Рё С€РёС„СЂРѕРІРєРё instance РѕР±СЊРµРєС‚РѕРІ
 
-    defines = re.findall(r"`define +(\w+)", filetext)  # список идентификаторов define
+    defines = re.findall(r"`define +(\w+)", filetext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ define
 
-    # список строк с определением или инициализацией базовых идентификаторов
-    # в группе хранятся списки идентификаторов
+    # СЃРїРёСЃРѕРє СЃС‚СЂРѕРє СЃ РѕРїСЂРµРґРµР»РµРЅРёРµРј РёР»Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёРµР№ Р±Р°Р·РѕРІС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
+    # РІ РіСЂСѓРїРїРµ С…СЂР°РЅСЏС‚СЃСЏ СЃРїРёСЃРєРё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
     base = base_ind_search(filetext, ["input", "output", "inout", "wire", "reg",
                                       "parameter", "localparam", "byte", "shortint",
                                       "int", "integer", "longint", "bit", "logic", "shortreal",
                                       "real", "realtime", "time", "event"])
 
-    enums = enum_ind_search(filetext)  # список идентификаторов enums
+    enums = enum_ind_search(filetext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ enums
 
-    structs = re.findall(r"\Wstruct[\w|\W]+?} *(\w+);", filetext)  # список идентификаторов struct
+    structs = re.findall(r"\Wstruct[\w|\W]+?} *(\w+);", filetext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ struct
 
-    typedefs = re.findall(r"\Wtypedef[\w|\W]+?} *(\w+);", filetext)  # список идентификаторов typedef
+    typedefs = re.findall(r"\Wtypedef[\w|\W]+?} *(\w+);", filetext)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ typedef
 
-    # удаление повторных идентификаторов typedef из enums и struct
+    # СѓРґР°Р»РµРЅРёРµ РїРѕРІС‚РѕСЂРЅС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ typedef РёР· enums Рё struct
     for a in structs:
         if a in typedefs:
             structs.remove(a)
@@ -389,173 +389,173 @@ def allind_search_and_replace(file):
         if a in typedefs:
             enums.remove(a)
 
-    # поиск идентификаторов, типа typedef'ов
+    # РїРѕРёСЃРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ, С‚РёРїР° typedef'РѕРІ
     for typedef in typedefs:
         base_typedef = re.findall(typedef + r" +(.*?[,;\n)=])", filetext)
         for i in range(len(base_typedef)):
-            base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных идентификаторов в base
+            base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # РґРѕР±Р°РІР»РµРЅРёРµ РЅР°Р№РґРµРЅРЅС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІ base
 
-    # поиск идентификаторов модулей и функций
+    # РїРѕРёСЃРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РјРѕРґСѓР»РµР№ Рё С„СѓРЅРєС†РёР№
     ModuleClusses = re.findall(r"\W(?:module|task|function)[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
 
-    # все идентификаторы (без повторов)
-    allind = set(defines + base + enums + structs + typedefs + ModuleClusses + instances)  # все идентификаторы
+    # РІСЃРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ (Р±РµР· РїРѕРІС‚РѕСЂРѕРІ)
+    allind = set(defines + base + enums + structs + typedefs + ModuleClusses + instances)  # РІСЃРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹
 
-    # шифровка идентификаторов и создание таблицы соответствия
+    # С€РёС„СЂРѕРІРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ Рё СЃРѕР·РґР°РЅРёРµ С‚Р°Р±Р»РёС†С‹ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
     decrypt_table = {}
     encrypt_file(allind, file, filetext, decrypt_table)
 
-    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
+    inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # РїРµСЂРµРІРµСЂРЅСѓС‚Р°СЏ С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
 
     modules = re.findall(r"\Wmodule[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()",
-                         filetext)  # список модулей, описанных в тексте файла
+                         filetext)  # СЃРїРёСЃРѕРє РјРѕРґСѓР»РµР№, РѕРїРёСЃР°РЅРЅС‹С… РІ С‚РµРєСЃС‚Рµ С„Р°Р№Р»Р°
 
-    # заменяем все instance блоки в других файлах, тк мы изменили названия портов функций modules
+    # Р·Р°РјРµРЅСЏРµРј РІСЃРµ instance Р±Р»РѕРєРё РІ РґСЂСѓРіРёС… С„Р°Р№Р»Р°С…, С‚Рє РјС‹ РёР·РјРµРЅРёР»Рё РЅР°Р·РІР°РЅРёСЏ РїРѕСЂС‚РѕРІ С„СѓРЅРєС†РёР№ modules
     change_instances_ports_allf(modules, inv_decrypt_table)
 
-    filetext = work_with_files.get_file_text(file)  # текст файла после шифрации части идентификаторов
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р° РїРѕСЃР»Рµ С€РёС„СЂР°С†РёРё С‡Р°СЃС‚Рё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 
-    # создаем файл с таблицей соответствия
+    # СЃРѕР·РґР°РµРј С„Р°Р№Р» СЃ С‚Р°Р±Р»РёС†РµР№ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
     write_decrt_in_file(file, decrypt_table)
 
-    # дешифруем instance блоки
+    # РґРµС€РёС„СЂСѓРµРј instance Р±Р»РѕРєРё
     for decr_inst in decrypt_table_instances:
         filetext = filetext.replace(decr_inst, decrypt_table_instances[decr_inst])
 
-    # шифруем входные данные портов instance блока
+    # С€РёС„СЂСѓРµРј РІС…РѕРґРЅС‹Рµ РґР°РЅРЅС‹Рµ РїРѕСЂС‚РѕРІ instance Р±Р»РѕРєР°
     for invdt in inv_decrypt_table:
         ports = set(re.findall(r"\( *" + invdt + r"\W", filetext))
         for port in ports:
-            # заменяем некоторые симвылы для правильной задачи регулярного выражения
+            # Р·Р°РјРµРЅСЏРµРј РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРёРјРІС‹Р»С‹ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ Р·Р°РґР°С‡Рё СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
             port = regexp_to_str(port)
 
             filetext = re.sub(port, "(" + inv_decrypt_table[re.search(r"\w+", port)[0]] + port[-1], filetext)
 
-    # заменяем инлентификаторы instance
+    # Р·Р°РјРµРЅСЏРµРј РёРЅР»РµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ instance
     for inst in instances:
         filetext = re.sub(inst + r" *\(", inv_decrypt_table[inst] + "(", filetext)
 
-    # запись обфусцированного текста
+    # Р·Р°РїРёСЃСЊ РѕР±С„СѓСЃС†РёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
     work_with_files.write_text_to_file(file, filetext)
 
 
-# ф-я замены названий портов instance обьектов, их и типов во всех файлах проекта
+# С„-СЏ Р·Р°РјРµРЅС‹ РЅР°Р·РІР°РЅРёР№ РїРѕСЂС‚РѕРІ instance РѕР±СЊРµРєС‚РѕРІ, РёС… Рё С‚РёРїРѕРІ РІРѕ РІСЃРµС… С„Р°Р№Р»Р°С… РїСЂРѕРµРєС‚Р°
 def change_instances_ports_allf(modules, decr_table):
-    files = work_with_files.get_sv_files(os.curdir)  # все файлы
+    files = work_with_files.get_sv_files(os.curdir)  # РІСЃРµ С„Р°Р№Р»С‹
 
-    # цикл изменения портов во всех файлах
+    # С†РёРєР» РёР·РјРµРЅРµРЅРёСЏ РїРѕСЂС‚РѕРІ РІРѕ РІСЃРµС… С„Р°Р№Р»Р°С…
     for file in files:
 
-        # обрабатываем ifdef/ifndef
+        # РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј ifdef/ifndef
         preobfuscator_ifdef(file)
 
-        decrypt_table_instances = {}  # таблица соответствия портов instance обьекта
+        decrypt_table_instances = {}  # С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ РїРѕСЂС‚РѕРІ instance РѕР±СЊРµРєС‚Р°
 
-        filetext = work_with_files.get_file_text(file)  # текст файла
+        filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-        # цикл обработки instance обьектов модулей modules
+        # С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё instance РѕР±СЊРµРєС‚РѕРІ РјРѕРґСѓР»РµР№ modules
         for module in modules:
 
-            # находим все instance обьекты (их текст)
+            # РЅР°С…РѕРґРёРј РІСЃРµ instance РѕР±СЊРµРєС‚С‹ (РёС… С‚РµРєСЃС‚)
             instances = re.findall(r"\W" + module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
             instances += re.findall(r"\W" + module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
 
-            # если такие обьекты существуют, то обрабатываем их
+            # РµСЃР»Рё С‚Р°РєРёРµ РѕР±СЊРµРєС‚С‹ СЃСѓС‰РµСЃС‚РІСѓСЋС‚, С‚Рѕ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј РёС…
             if instances:
 
-                # цикл обработки кажого обьекта instance
+                # С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё РєР°Р¶РѕРіРѕ РѕР±СЊРµРєС‚Р° instance
                 for instance in instances:
 
-                    # сохраняем старый текст обьекта
+                    # СЃРѕС…СЂР°РЅСЏРµРј СЃС‚Р°СЂС‹Р№ С‚РµРєСЃС‚ РѕР±СЊРµРєС‚Р°
                     oldinstance = instance
 
-                    # поиск всех портов обьекта
+                    # РїРѕРёСЃРє РІСЃРµС… РїРѕСЂС‚РѕРІ РѕР±СЊРµРєС‚Р°
                     inouts = re.findall(r"\.(\w+)", instance)
 
-                    # цикл замены названия портов на соответствующие в таблице decr_table
+                    # С†РёРєР» Р·Р°РјРµРЅС‹ РЅР°Р·РІР°РЅРёСЏ РїРѕСЂС‚РѕРІ РЅР° СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРµ РІ С‚Р°Р±Р»РёС†Рµ decr_table
                     for inout in inouts:
                         if inout in decr_table:
                             instance = change_ind(instance, inout, decr_table[inout])
 
-                            # добавляем в таблицу decrypt_table_instances соответствующую замену из decr_table
+                            # РґРѕР±Р°РІР»СЏРµРј РІ С‚Р°Р±Р»РёС†Сѓ decrypt_table_instances СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰СѓСЋ Р·Р°РјРµРЅСѓ РёР· decr_table
                             decrypt_table_instances[decr_table[inout]] = inout
 
-                    # если необходимо - заменяем название модуля instance обьекта и добавляем в таблицу
+                    # РµСЃР»Рё РЅРµРѕР±С…РѕРґРёРјРѕ - Р·Р°РјРµРЅСЏРµРј РЅР°Р·РІР°РЅРёРµ РјРѕРґСѓР»СЏ instance РѕР±СЊРµРєС‚Р° Рё РґРѕР±Р°РІР»СЏРµРј РІ С‚Р°Р±Р»РёС†Сѓ
                     # decrypt_table_instances
                     if module in decr_table:
-                        instance = re.sub(module, decr_table[module], instance, 1)  # заменяем только 1 вхождение
+                        instance = re.sub(module, decr_table[module], instance, 1)  # Р·Р°РјРµРЅСЏРµРј С‚РѕР»СЊРєРѕ 1 РІС…РѕР¶РґРµРЅРёРµ
                         decrypt_table_instances[decr_table[module]] = module
 
-                    # заменяем текст на измененный
+                    # Р·Р°РјРµРЅСЏРµРј С‚РµРєСЃС‚ РЅР° РёР·РјРµРЅРµРЅРЅС‹Р№
                     filetext = filetext.replace(oldinstance, instance)
 
-            # если таких обьектов нет, то продолжаем поиск
+            # РµСЃР»Рё С‚Р°РєРёС… РѕР±СЊРµРєС‚РѕРІ РЅРµС‚, С‚Рѕ РїСЂРѕРґРѕР»Р¶Р°РµРј РїРѕРёСЃРє
             else:
                 continue
-        # если таблица decrypt_table_instances не пуста, то записываем ее в файл таблиц соответствия
+        # РµСЃР»Рё С‚Р°Р±Р»РёС†Р° decrypt_table_instances РЅРµ РїСѓСЃС‚Р°, С‚Рѕ Р·Р°РїРёСЃС‹РІР°РµРј РµРµ РІ С„Р°Р№Р» С‚Р°Р±Р»РёС† СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
         if decrypt_table_instances:
             write_decrt_in_file(file, decrypt_table_instances)
 
-        # запись измененного текста в файл
+        # Р·Р°РїРёСЃСЊ РёР·РјРµРЅРµРЅРЅРѕРіРѕ С‚РµРєСЃС‚Р° РІ С„Р°Р№Р»
         work_with_files.write_text_to_file(file, filetext)
 
 
-# ------------------------------ФУНКЦИИ_ШИФРОВАНИЯ------------------------------ #
+# ------------------------------Р¤РЈРќРљР¦РР_РЁРР¤Р РћР’РђРќРРЇ------------------------------ #
 
-# ф-я шиврования идентификаторов в тексте
+# С„-СЏ С€РёРІСЂРѕРІР°РЅРёСЏ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІ С‚РµРєСЃС‚Рµ
 def encrypt_text(allind, filetext, decrypt_table):
-    # цикл замены всех идентификаторов
+    # С†РёРєР» Р·Р°РјРµРЅС‹ РІСЃРµС… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
     for ind in allind:
-        randlength = random.randint(8, 32)  # выбор случайной длины строки
+        randlength = random.randint(8, 32)  # РІС‹Р±РѕСЂ СЃР»СѓС‡Р°Р№РЅРѕР№ РґР»РёРЅС‹ СЃС‚СЂРѕРєРё
         letters_and_digits = string.ascii_letters + string.digits
-        rand_string = ''.join(random.sample(letters_and_digits, randlength))  # ссоздание случайной строки
+        rand_string = ''.join(random.sample(letters_and_digits, randlength))  # СЃСЃРѕР·РґР°РЅРёРµ СЃР»СѓС‡Р°Р№РЅРѕР№ СЃС‚СЂРѕРєРё
 
-        decrypt_table[rand_string] = ind  # добавляем в таблицу новое соответствие новому идентификатору
+        decrypt_table[rand_string] = ind  # РґРѕР±Р°РІР»СЏРµРј РІ С‚Р°Р±Р»РёС†Сѓ РЅРѕРІРѕРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РЅРѕРІРѕРјСѓ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂСѓ
 
         filetext = change_ind(filetext, ind, rand_string)
 
     return filetext
 
 
-# ф-я записи вместо текста "text" зашиврованного текста в файл "file"
+# С„-СЏ Р·Р°РїРёСЃРё РІРјРµСЃС‚Рѕ С‚РµРєСЃС‚Р° "text" Р·Р°С€РёРІСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р° РІ С„Р°Р№Р» "file"
 def encrypt_file(allind, file, text, decrypt_table):
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    # заменяем на зашифрованный текст
+    # Р·Р°РјРµРЅСЏРµРј РЅР° Р·Р°С€РёС„СЂРѕРІР°РЅРЅС‹Р№ С‚РµРєСЃС‚
     filetext = filetext.replace(text, encrypt_text(allind, text, decrypt_table))
 
-    # записываем его
+    # Р·Р°РїРёСЃС‹РІР°РµРј РµРіРѕ
     work_with_files.write_text_to_file(file, filetext)
 
 
-# ф-я создания (или добавление в существующий файл) таблицы замены идентификаторов
+# С„-СЏ СЃРѕР·РґР°РЅРёСЏ (РёР»Рё РґРѕР±Р°РІР»РµРЅРёРµ РІ СЃСѓС‰РµСЃС‚РІСѓСЋС‰РёР№ С„Р°Р№Р») С‚Р°Р±Р»РёС†С‹ Р·Р°РјРµРЅС‹ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 def write_decrt_in_file(file, decrypt_table):
     if decrypt_table:
         work_with_files.add_text_to_file(str(decrypt_table), file.replace(".sv", "_decrypt_table.txt"))
 
 
-# ф-я замены идентификаторов в тексте на новые
+# С„-СЏ Р·Р°РјРµРЅС‹ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІ С‚РµРєСЃС‚Рµ РЅР° РЅРѕРІС‹Рµ
 def change_ind(text, ind, newind):
-    indefic = set(re.findall(r'\W' + ind + r'\W', text))  # поиск всех совпадений с текущим идентификатором
-    # ищем именно совпадения с несловесными символами по
-    # бокам
-    # цикл замены каждого совпадения на случайную строку
+    indefic = set(re.findall(r'\W' + ind + r'\W', text))  # РїРѕРёСЃРє РІСЃРµС… СЃРѕРІРїР°РґРµРЅРёР№ СЃ С‚РµРєСѓС‰РёРј РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРј
+    # РёС‰РµРј РёРјРµРЅРЅРѕ СЃРѕРІРїР°РґРµРЅРёСЏ СЃ РЅРµСЃР»РѕРІРµСЃРЅС‹РјРё СЃРёРјРІРѕР»Р°РјРё РїРѕ
+    # Р±РѕРєР°Рј
+    # С†РёРєР» Р·Р°РјРµРЅС‹ РєР°Р¶РґРѕРіРѕ СЃРѕРІРїР°РґРµРЅРёСЏ РЅР° СЃР»СѓС‡Р°Р№РЅСѓСЋ СЃС‚СЂРѕРєСѓ
     for indef in indefic:
-        first = indef[0]  # несловесный символ слева от совпадения
-        last = indef[-1]  # несловесный справа слева от совпадения
+        first = indef[0]  # РЅРµСЃР»РѕРІРµСЃРЅС‹Р№ СЃРёРјРІРѕР» СЃР»РµРІР° РѕС‚ СЃРѕРІРїР°РґРµРЅРёСЏ
+        last = indef[-1]  # РЅРµСЃР»РѕРІРµСЃРЅС‹Р№ СЃРїСЂР°РІР° СЃР»РµРІР° РѕС‚ СЃРѕРІРїР°РґРµРЅРёСЏ
 
-        # заменяем некоторые симвылы для правильной задачи регулярного выражения
+        # Р·Р°РјРµРЅСЏРµРј РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРёРјРІС‹Р»С‹ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ Р·Р°РґР°С‡Рё СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
         indef = regexp_to_str(indef)
 
-        # замена совпадения на случайную строку
+        # Р·Р°РјРµРЅР° СЃРѕРІРїР°РґРµРЅРёСЏ РЅР° СЃР»СѓС‡Р°Р№РЅСѓСЋ СЃС‚СЂРѕРєСѓ
         text = re.sub(indef, first + newind + last, text)
 
     return text
 
 
-# ф-я заменяющая регулярное выражение со спец. символами в обычную строку
+# С„-СЏ Р·Р°РјРµРЅСЏСЋС‰Р°СЏ СЂРµРіСѓР»СЏСЂРЅРѕРµ РІС‹СЂР°Р¶РµРЅРёРµ СЃРѕ СЃРїРµС†. СЃРёРјРІРѕР»Р°РјРё РІ РѕР±С‹С‡РЅСѓСЋ СЃС‚СЂРѕРєСѓ
 def regexp_to_str(regexp):
-    # заменяем некоторые симвылы для правильной задачи регулярного выражения
+    # Р·Р°РјРµРЅСЏРµРј РЅРµРєРѕС‚РѕСЂС‹Рµ СЃРёРјРІС‹Р»С‹ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ Р·Р°РґР°С‡Рё СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ
     regexp = regexp.replace("(", r"\(")
     regexp = regexp.replace("{", r"\{")
     regexp = regexp.replace(".", r"\.")
@@ -570,46 +570,46 @@ def regexp_to_str(regexp):
     return regexp
 
 
-# ------------------------------ФУНКЦИИ_ПОИСКА_ИДЕНТИФИКАТОРОВ----------------------------- #
+# ------------------------------Р¤РЈРќРљР¦РР_РџРћРРЎРљРђ_РР”Р•РќРўРР¤РРљРђРўРћР РћР’----------------------------- #
 
-# возращает имена всех instance обьектов
+# РІРѕР·СЂР°С‰Р°РµС‚ РёРјРµРЅР° РІСЃРµС… instance РѕР±СЊРµРєС‚РѕРІ
 def search_instances(file):
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    # все модули и их порты
+    # РІСЃРµ РјРѕРґСѓР»Рё Рё РёС… РїРѕСЂС‚С‹
     modules = work_with_files.get_all_modules(os.curdir)
 
-    instances = []  # список instance обьектов
+    instances = []  # СЃРїРёСЃРѕРє instance РѕР±СЊРµРєС‚РѕРІ
 
-    # цикл поиска instance модуля module из списка modules в файле
+    # С†РёРєР» РїРѕРёСЃРєР° instance РјРѕРґСѓР»СЏ module РёР· СЃРїРёСЃРєР° modules РІ С„Р°Р№Р»Рµ
     for module in modules:
 
-        # поиск
+        # РїРѕРёСЃРє
         searched_instance = re.findall(r"\W" + module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
         searched_instance += re.findall(r"\W" + module + r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
 
-        # добавление в список
+        # РґРѕР±Р°РІР»РµРЅРёРµ РІ СЃРїРёСЃРѕРє
         if searched_instance:
             instances += searched_instance
         else:
             continue
 
-    # возврат списка имен instance
+    # РІРѕР·РІСЂР°С‚ СЃРїРёСЃРєР° РёРјРµРЅ instance
     return instances
 
 
-# ф-я поиска портов input/output/inout в тексте
+# С„-СЏ РїРѕРёСЃРєР° РїРѕСЂС‚РѕРІ input/output/inout РІ С‚РµРєСЃС‚Рµ
 def search_inouts(text):
-    inouts = base_ind_search(text, ["(?:input|output|inout)"])  # список input/output/inout портов
+    inouts = base_ind_search(text, ["(?:input|output|inout)"])  # СЃРїРёСЃРѕРє input/output/inout РїРѕСЂС‚РѕРІ
 
     return inouts
 
 
-# ф-я возвращающая список обычных строчных (без структур) идентификаторов в тексте
+# С„-СЏ РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ СЃРїРёСЃРѕРє РѕР±С‹С‡РЅС‹С… СЃС‚СЂРѕС‡РЅС‹С… (Р±РµР· СЃС‚СЂСѓРєС‚СѓСЂ) РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІ С‚РµРєСЃС‚Рµ
 def base_ind_search(text, ind_list):
     base_ind_pattern = ind_list[0]
 
-    # начало регулярного выражения для нахождения хотябы одного из идентификаторов
+    # РЅР°С‡Р°Р»Рѕ СЂРµРіСѓР»СЏСЂРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ РґР»СЏ РЅР°С…РѕР¶РґРµРЅРёСЏ С…РѕС‚СЏР±С‹ РѕРґРЅРѕРіРѕ РёР· РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
     if len(ind_list) > 1:
         base_ind_pattern = "(?:"
         for ind in ind_list:
@@ -617,115 +617,115 @@ def base_ind_search(text, ind_list):
         base_ind_pattern = base_ind_pattern[:-1]
         base_ind_pattern += ")"
 
-    # список строк с определением или инициализацией базовых идентификаторов
-    # в группе хранятся списки идентификаторов
+    # СЃРїРёСЃРѕРє СЃС‚СЂРѕРє СЃ РѕРїСЂРµРґРµР»РµРЅРёРµРј РёР»Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёРµР№ Р±Р°Р·РѕРІС‹С… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
+    # РІ РіСЂСѓРїРїРµ С…СЂР°РЅСЏС‚СЃСЏ СЃРїРёСЃРєРё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
     base = []
-    # список строк с информацией после типа идентификатора
+    # СЃРїРёСЃРѕРє СЃС‚СЂРѕРє СЃ РёРЅС„РѕСЂРјР°С†РёРµР№ РїРѕСЃР»Рµ С‚РёРїР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°
     baseindentif = re.findall(r"\W" + base_ind_pattern + " +(.*?[,;)=])", text)
 
-    # поиск строк со множественным определением
+    # РїРѕРёСЃРє СЃС‚СЂРѕРє СЃРѕ РјРЅРѕР¶РµСЃС‚РІРµРЅРЅС‹Рј РѕРїСЂРµРґРµР»РµРЅРёРµРј
     baseindentif += re.findall(r"\W" + base_ind_pattern + " +.*?,(.*?;)", text)
 
-    # поиск строк с \n в конце
+    # РїРѕРёСЃРє СЃС‚СЂРѕРє СЃ \n РІ РєРѕРЅС†Рµ
     baseindentif += re.findall(r"\W" + base_ind_pattern + " +([^;,)=\n]+?\n)", text)
 
-    # выделение самих идентификаторов из списка baseindentif
+    # РІС‹РґРµР»РµРЅРёРµ СЃР°РјРёС… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РёР· СЃРїРёСЃРєР° baseindentif
     for i in range(len(baseindentif)):
         base += re.findall(r"(\w+) *[,;)=\n]", baseindentif[i])
 
-        # выделение идентификаторов, у которпых в конце [\d:\d]
+        # РІС‹РґРµР»РµРЅРёРµ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ, Сѓ РєРѕС‚РѕСЂРїС‹С… РІ РєРѕРЅС†Рµ [\d:\d]
         base += re.findall(r"(\w+) +\[[\d :\-*\w`]+] *[,;=\n]", baseindentif[i])
 
     return base
 
 
-# ф-я возвращающая список идентификаторов, связанных с enum
+# С„-СЏ РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ, СЃРІСЏР·Р°РЅРЅС‹С… СЃ enum
 def enum_ind_search(text):
-    enums = []  # список идентифиакторов внутри блока enums и самих идентификатров определяемых enums
+    enums = []  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёР°РєС‚РѕСЂРѕРІ РІРЅСѓС‚СЂРё Р±Р»РѕРєР° enums Рё СЃР°РјРёС… РёРґРµРЅС‚РёС„РёРєР°С‚СЂРѕРІ РѕРїСЂРµРґРµР»СЏРµРјС‹С… enums
 
-    # список строк с блоками enums
-    # в 1 группе хранится текст внутри блока
-    # во 2 группе хранятся идентификаторы enums
+    # СЃРїРёСЃРѕРє СЃС‚СЂРѕРє СЃ Р±Р»РѕРєР°РјРё enums
+    # РІ 1 РіСЂСѓРїРїРµ С…СЂР°РЅРёС‚СЃСЏ С‚РµРєСЃС‚ РІРЅСѓС‚СЂРё Р±Р»РѕРєР°
+    # РІРѕ 2 РіСЂСѓРїРїРµ С…СЂР°РЅСЏС‚СЃСЏ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂС‹ enums
     enumblocks = re.findall(r"\Wenum[\w,; \[\]`:-]+\{([\w|\W]+?)} *([\w,; \[\]`:-]+)", text)
 
-    # цикл обработки enums (выделения идентификаторов из текстов enums)
+    # С†РёРєР» РѕР±СЂР°Р±РѕС‚РєРё enums (РІС‹РґРµР»РµРЅРёСЏ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РёР· С‚РµРєСЃС‚РѕРІ enums)
     for i in range(len(enumblocks)):
-        insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # текст внтури блока без присваиваний
-        insideind = re.findall(r"(\w+) *", insideWOeq)  # список идентификаторов внутри блока
+        insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # С‚РµРєСЃС‚ РІРЅС‚СѓСЂРё Р±Р»РѕРєР° Р±РµР· РїСЂРёСЃРІР°РёРІР°РЅРёР№
+        insideind = re.findall(r"(\w+) *", insideWOeq)  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ РІРЅСѓС‚СЂРё Р±Р»РѕРєР°
         outsideind = re.findall(r"(\w+) *",
-                                enumblocks[i][1])  # список идентификаторов снаружи блока (объекты enum)
+                                enumblocks[i][1])  # СЃРїРёСЃРѕРє РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ СЃРЅР°СЂСѓР¶Рё Р±Р»РѕРєР° (РѕР±СЉРµРєС‚С‹ enum)
         enumblocks[i] = (insideind + outsideind)
-        enums += enumblocks[i]  # в итоге делаем список всех идентификаторов связанных с блоками enum
+        enums += enumblocks[i]  # РІ РёС‚РѕРіРµ РґРµР»Р°РµРј СЃРїРёСЃРѕРє РІСЃРµС… РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ СЃРІСЏР·Р°РЅРЅС‹С… СЃ Р±Р»РѕРєР°РјРё enum
 
     return enums
 
 
-# ------------------------------ВСПОМОГАТЕЛЬНЫЕ_ФУНКЦИИ----------------------------- #
+# ------------------------------Р’РЎРџРћРњРћР“РђРўР•Р›Р¬РќР«Р•_Р¤РЈРќРљР¦РР----------------------------- #
 
-# ф-я удаления из списка allind найденных input/output/inout идентификаторов
+# С„-СЏ СѓРґР°Р»РµРЅРёСЏ РёР· СЃРїРёСЃРєР° allind РЅР°Р№РґРµРЅРЅС‹С… input/output/inout РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ
 def delete_inouts(inouts, allind):
     for i in range(len(inouts)):
         if inouts[i] in allind:
             allind.remove(inouts[i])
 
 
-# ф-я обработки ifdef/ifndef и удаления комментариев
+# С„-СЏ РѕР±СЂР°Р±РѕС‚РєРё ifdef/ifndef Рё СѓРґР°Р»РµРЅРёСЏ РєРѕРјРјРµРЅС‚Р°СЂРёРµРІ
 def preobfuscator_ifdef(file):
-    # json ifdef скрипта
-    # нужен для включения доп. списка include
+    # json ifdef СЃРєСЂРёРїС‚Р°
+    # РЅСѓР¶РµРЅ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ РґРѕРї. СЃРїРёСЃРєР° include
     json_file_ifdef = open("jsons/ifdefprocessing.json", "r")
     json_ifdef_struct = json.load(json_file_ifdef)
 
-    # включаем все include файлы
+    # РІРєР»СЋС‡Р°РµРј РІСЃРµ include С„Р°Р№Р»С‹
     ifdefprocessing.include_for_file(file, json_ifdef_struct)
-    # обрабатываем ifdef/ifndef
+    # РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј ifdef/ifndef
     ifdefprocessing.ifdef_pr_forfile(file, json_ifdef_struct)
 
-    #  удаляем комментарии
+    #  СѓРґР°Р»СЏРµРј РєРѕРјРјРµРЅС‚Р°СЂРёРё
     erase_comments.delete(file, ["/\*[\s|\S]*?\*/", "//[^\n]*\n"], False)
 
-    # добавляем в начало \n (нужно для правильного поиска идентификаторов)
+    # РґРѕР±Р°РІР»СЏРµРј РІ РЅР°С‡Р°Р»Рѕ \n (РЅСѓР¶РЅРѕ РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕРіРѕ РїРѕРёСЃРєР° РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂРѕРІ)
     filetext = work_with_files.get_file_text(file)
     if filetext[0] != "\n":
         work_with_files.write_text_to_file(file, "\n" + filetext)
 
 
-# ф-я скрывающая (замена на случайную строку) instance блоков, для правильной обработки остального текста
+# С„-СЏ СЃРєСЂС‹РІР°СЋС‰Р°СЏ (Р·Р°РјРµРЅР° РЅР° СЃР»СѓС‡Р°Р№РЅСѓСЋ СЃС‚СЂРѕРєСѓ) instance Р±Р»РѕРєРѕРІ, РґР»СЏ РїСЂР°РІРёР»СЊРЅРѕР№ РѕР±СЂР°Р±РѕС‚РєРё РѕСЃС‚Р°Р»СЊРЅРѕРіРѕ С‚РµРєСЃС‚Р°
 def preobfuscator_instance(file):
-    filetext = work_with_files.get_file_text(file)  # текст файла
+    filetext = work_with_files.get_file_text(file)  # С‚РµРєСЃС‚ С„Р°Р№Р»Р°
 
-    modules = work_with_files.get_all_modules(os.curdir)  # все модули проекта
+    modules = work_with_files.get_all_modules(os.curdir)  # РІСЃРµ РјРѕРґСѓР»Рё РїСЂРѕРµРєС‚Р°
 
-    decrypt_table = {}  # таблица соответствия зашифрованных блоков instance
+    decrypt_table = {}  # С‚Р°Р±Р»РёС†Р° СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ Р·Р°С€РёС„СЂРѕРІР°РЅРЅС‹С… Р±Р»РѕРєРѕРІ instance
 
-    # цикл поиска и шиврования блоков instance
+    # С†РёРєР» РїРѕРёСЃРєР° Рё С€РёРІСЂРѕРІР°РЅРёСЏ Р±Р»РѕРєРѕРІ instance
     for module in modules:
 
-        # поиск
+        # РїРѕРёСЃРє
         searched_instances = re.findall(r"\W" + module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
         searched_instances += re.findall(r"\W" + module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
 
-        # если нашли, то заменяем все блоки
+        # РµСЃР»Рё РЅР°С€Р»Рё, С‚Рѕ Р·Р°РјРµРЅСЏРµРј РІСЃРµ Р±Р»РѕРєРё
         if searched_instances:
 
-            # замена блоков
+            # Р·Р°РјРµРЅР° Р±Р»РѕРєРѕРІ
             for instance_block in searched_instances:
                 letters_and_digits = string.ascii_letters + string.digits
-                rand_string = ''.join(random.sample(letters_and_digits, 40))  # создание случайной строки
+                rand_string = ''.join(random.sample(letters_and_digits, 40))  # СЃРѕР·РґР°РЅРёРµ СЃР»СѓС‡Р°Р№РЅРѕР№ СЃС‚СЂРѕРєРё
 
-                # сохраняем замену в таблице соответствия
+                # СЃРѕС…СЂР°РЅСЏРµРј Р·Р°РјРµРЅСѓ РІ С‚Р°Р±Р»РёС†Рµ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёСЏ
                 decrypt_table[rand_string] = instance_block
 
-                # замена в тексте
+                # Р·Р°РјРµРЅР° РІ С‚РµРєСЃС‚Рµ
                 filetext = filetext.replace(instance_block, rand_string)
 
-        # если не нашли, то продолжаем поиск
+        # РµСЃР»Рё РЅРµ РЅР°С€Р»Рё, С‚Рѕ РїСЂРѕРґРѕР»Р¶Р°РµРј РїРѕРёСЃРє
         else:
             continue
 
-    # запись зашиврованного текста
+    # Р·Р°РїРёСЃСЊ Р·Р°С€РёРІСЂРѕРІР°РЅРЅРѕРіРѕ С‚РµРєСЃС‚Р°
     work_with_files.write_text_to_file(file, filetext)
 
-    # возврат таблицы соответсвия зашиврованный блоков instance
+    # РІРѕР·РІСЂР°С‚ С‚Р°Р±Р»РёС†С‹ СЃРѕРѕС‚РІРµС‚СЃРІРёСЏ Р·Р°С€РёРІСЂРѕРІР°РЅРЅС‹Р№ Р±Р»РѕРєРѕРІ instance
     return decrypt_table
 

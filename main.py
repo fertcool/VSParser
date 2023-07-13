@@ -1,12 +1,10 @@
 import json
-import os
-
 import check_i
 import deobfuscator
 import ifdefprocessing
 import erase_comments
 import read_hierarchy
-import work_with_files
+
 import obfuscator
 
 json_file = open(r"jsons/base.json", "r")

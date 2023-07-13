@@ -7,7 +7,7 @@ import work_with_files
 files = work_with_files.get_sv_files(os.curdir)
 tables = []
 
-#d
+
 def scan_tables(dir, svfiles):
     # dirfiles = []  # все файлы и папки директории
     dirpathes = []  # все папки директории

@@ -92,13 +92,12 @@ def delete(svfile, patterns, plus):
                 # удаляем комментарий, совпавший с шаблоном
                 svtext = re.sub(pattern, '\n', svtext)
 
-    file = open(svfile, "w")
 
     # убираем лишние отступы
     svtext = re.sub(r"\n{3,}", "\n\n", svtext)
 
     # запись в файл текста кода без комментариев
-    work_with_files.write_text_to_file(file, svtext)
+    work_with_files.write_text_to_file(svfile, svtext)
 
 
 

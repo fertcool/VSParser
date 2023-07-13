@@ -18,10 +18,10 @@ def get_file_text(file):
 
 # ф-я записи текста в файл
 def write_text_to_file(file, text):
-    # записываем в файл только текст модуля
-    fileopenwm = open(file, "w")
-    fileopenwm.write(text)
-    fileopenwm.close()
+
+    fileopen = open(file, "w")
+    fileopen.write(text)
+    fileopen.close()
 
 
 # добавление текста в файл
