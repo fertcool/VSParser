@@ -357,7 +357,8 @@ def ind_search_and_replace(file, ind):
 def allind_search_and_replace(file):
     # обработка ifdef/ifndef
     preobfuscator_ifdef(file)
-
+    if file == ".\\scr1-master\\src\\core\\primitives\\scr1_reset_cells.sv":
+        print("fdsj")
     # instance идентификаторы (имена)
     instances = search_instances(file)
 
@@ -433,7 +434,7 @@ def allind_search_and_replace(file):
 
     # заменяем инлентификаторы instance
     for inst in instances:
-        filetext = re.sub(inst + r" *\(", inv_decrypt_table[inst] + "(", filetext)
+        filetext = re.sub(inst + r"[ \n]*\(", inv_decrypt_table[inst] + "(", filetext)
 
     # запись обфусцированного текста
     work_with_files.write_text_to_file(file, filetext)
@@ -585,8 +586,9 @@ def search_instances(file):
     for module in modules:
 
         # поиск
-        searched_instance = re.findall(r"\W" + module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
-        searched_instance += re.findall(r"\W" + module + r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
+        searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
+        searched_instance += re.findall(
+            r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
 
         # добавление в список
         if searched_instance:
@@ -695,15 +697,18 @@ def preobfuscator_instance(file):
     filetext = work_with_files.get_file_text(file)  # текст файла
 
     modules = work_with_files.get_all_modules(os.curdir)  # все модули проекта
+    modulenames_in_file = re.findall(r"module +(\w+)", filetext)  # имена модулей
 
     decrypt_table = {}  # таблица соответствия зашифрованных блоков instance
 
     # цикл поиска и шиврования блоков instance
     for module in modules:
+        if module in modulenames_in_file:
+            continue
 
         # поиск
-        searched_instances = re.findall(r"\W" + module + r" +\w+ *\([\w|\W]+?\) *;", filetext)
-        searched_instances += re.findall(r"\W" + module + r" *# *\([\w|\W]+?\) *\w+ *\([\w|\W]+?\);", filetext)
+        searched_instances = re.findall(module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
+        searched_instances += re.findall(module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
 
         # если нашли, то заменяем все блоки
         if searched_instances:

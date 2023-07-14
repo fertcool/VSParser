@@ -158,7 +158,9 @@ def project_struct_report(filename, inst_in_modules_dict):
 
         # добавление instance обьектов в корневых модулях в очередь
         for inst in inst_in_modules_dict[root]:
-            modules_queue.put(inst)
+            if not used[inst]:
+                modules_queue.put(inst)
+                used[inst] = True
 
     # цикл печати instance обьектов в отчет (что-то типо поиска в ширину)
     while not modules_queue.empty():
@@ -169,6 +171,7 @@ def project_struct_report(filename, inst_in_modules_dict):
         fileopen.write(cur_module + " -> " + str(
             inst_in_modules_dict[re.search(r"\((\w+)\)", cur_module)[1]]) + "\n\n")
 
+        
         # цикл добавления instance обьектов текущего модуля в очередь
         for inst in inst_in_modules_dict[re.search(r"\((\w+)\)", cur_module)[1]]:
             if not used[inst]:
@@ -301,8 +304,8 @@ def get_insts_in_modules():
             for module in modules:
 
                 # поиск
-                searched_instance = re.findall(module + r" +(\w+) *\([\w|\W]+?\) *;", filetext)
-                searched_instance += re.findall(module + r" *# *\([\w|\W]+?\) *(\w+) *\([\w|\W]+?\);", filetext)
+                searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", moduleblock)
+                searched_instance += re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", moduleblock)
 
                 # добавление в список с типом в круглых скобках
                 if searched_instance:
