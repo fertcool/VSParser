@@ -19,7 +19,7 @@ files = work_with_files.get_sv_files(os.curdir)  # sv файлы всего пр
 for file_g in files:
     obfuscator.preobfuscator_ifdef(file_g)
 
-modules = work_with_files.get_all_modules(os.curdir)  # все модули
+modules = work_with_files.get_all_modules()  # все модули
 
 
 # ------------------------------ЗАПУСК_ЧТЕНИЯ_ИЕРАРХИИ------------------------------ #
@@ -72,7 +72,7 @@ def splitting_modules_by_files():
         filetext = work_with_files.get_file_text(file)  # текст файла
 
         # список полных текстов блоков модулей файла
-        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
+        moduleblocks = work_with_files.get_module_blocks(filetext)
 
         # если нашли файл с более чем 1 модулем, то разделяем файл
         if len(moduleblocks) > 1:
@@ -171,7 +171,6 @@ def project_struct_report(filename, inst_in_modules_dict):
         fileopen.write(cur_module + " -> " + str(
             inst_in_modules_dict[re.search(r"\((\w+)\)", cur_module)[1]]) + "\n\n")
 
-        
         # цикл добавления instance обьектов текущего модуля в очередь
         for inst in inst_in_modules_dict[re.search(r"\((\w+)\)", cur_module)[1]]:
             if not used[inst]:
@@ -226,7 +225,7 @@ def project_allobjects_report(filename, inst_in_modules_dict):
     roots = get_roots_modules(inst_in_modules_dict)
 
     # получаем словарь модулей со всеми их обьектами (reg, net, instance, port)
-    modules_with_objects = work_with_files.get_all_modules(os.curdir, False)
+    modules_with_objects = work_with_files.get_all_modules(False)
 
     modules_queue = Queue()  # очередь instance обьектов
 
@@ -291,7 +290,7 @@ def get_insts_in_modules():
         filetext = work_with_files.get_file_text(file)  # текст файла
 
         # список полных текстов блоков модулей файла
-        moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
+        moduleblocks = work_with_files.get_module_blocks(filetext)
 
         # цикл поиска instance обьектов во всех модулях файла
         for moduleblock in moduleblocks:

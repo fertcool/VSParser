@@ -57,7 +57,7 @@ def decryptall(file):
     # ищем все порты и параметры модулей в файле, чтобы далее расшиaвровать их во всех файлах
     ports = obfuscator.base_ind_search(filetext, ["input", "output", "inout", "parameter"])
 
-    modules = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)  # список модулей, описанных в тексте файла
+    modules = work_with_files.get_modules(filetext)  # список модулей, описанных в тексте файла
 
     # получаем таблицу соответствия
     decrypt_table = get_decrt_in_file(file)
@@ -108,11 +108,11 @@ def decrypt_one_ind(file, ind):
     elif ind == "module":
 
         # поиск идентификаторов модулей
-        allind = re.findall(r"module[\w|\W]*?(\w+)[ \n]*?(?:\(|#\()", filetext)
+        allind = work_with_files.get_modules(filetext)
 
     elif ind == "instance":
 
-        allind = obfuscator.search_instances(file)
+        allind = obfuscator.search_instances(filetext)
 
     # ошибка
     else:
@@ -139,7 +139,7 @@ def decrypt_module_inout(file, module):
 
     decrypt_table = get_decrt_in_file(file)  # таблица соответствия
 
-    moduleblock = re.search(r"module +" + module + r"[\w|\W]+?endmodule", filetext)
+    moduleblock = work_with_files.get_module_blocks(filetext, module)
 
     # если нашли модуль
     if moduleblock:
@@ -193,7 +193,7 @@ def get_decrt_in_file(file):
 
         return decrypt_table
     else:
-        return None
+        return {}
 
 
 # ф-я дешифрации некотрых идентификаторов во всех файлах проекта

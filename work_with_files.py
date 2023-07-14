@@ -67,12 +67,13 @@ def get_sv_files(dir):
 
 # ------------------------------ФУНКЦИИ_ПОИСКА_МОДУЛЕЙ------------------------------ #
 # ф-я поиска списка всех модулей проекта или же словаря модулей (с обьектами reg, net, instance, port)
-def get_all_modules(dir, onlymodules = True):
-
+def get_all_modules(onlymodules = True):
+    # onlymodules - флаг работы со списком или словарем
     # перед поиском желательно удалить все комментарии и выполнить обработку ifdef/ifndef
     # можно использовать obfuscator.preobfuscator()
 
-    svfiles = get_sv_files(dir)  # список путей sv файлов
+    svfiles = get_sv_files(os.curdir)  # список путей sv файлов
+
     # если флаг onlymodules = false то работаем со словарем
     if not onlymodules:
 
@@ -85,18 +86,30 @@ def get_all_modules(dir, onlymodules = True):
 
     # поиск модулей во всех файлах
     for svfile in svfiles:
-        get_modules_infile(svfile, modules, onlymodules)
+        filetext = get_file_text(svfile)
+        if not onlymodules:
+            modules.update(get_modules(filetext, onlymodules))
+        else:
+            modules += get_modules(filetext, onlymodules)
 
     return modules
 
 
 # ф-я поиска либо словаря модулей либо списка модулей в 1 файле
-def get_modules_infile(file, modules, onlymodules=True):
+def get_modules(text, onlymodules=True):
 
-    filetext = get_file_text(file)  # текст файла
+    # если флаг onlymodules = false то работаем со словарем
+    if not onlymodules:
+
+        modules = {}  # словарь модулей во всем проекте, где ключ - название модуля,
+        # а значение - словарь типов reg, net, instance, port со списками соответствующих обьектов
+
+    # если флаг onlymodules = true то работаем со списком
+    else:
+        modules = []  # список модулей во всем проекте
 
     # список полных текстов блоков модулей файла
-    moduleblocks = re.findall(r"module +[\w|\W]+?endmodule", filetext)
+    moduleblocks = get_module_blocks(text)
 
     # цикл обработки всех модулей
     for moduleblock in moduleblocks:
@@ -106,19 +119,15 @@ def get_modules_infile(file, modules, onlymodules=True):
         # если обрабатываем словарь модулей
         if not onlymodules:
 
-            # записываем в файл только текст модуля
-            write_text_to_file(file, moduleblock)
-
             inouts = obfuscator.search_inouts(moduleblock)  # список портов модуля
 
-            instances = obfuscator.search_instances(file)  # список instance обьектов модуля
-
-            regs_strs = re.findall(r"reg +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)  # список строк с обьектами regs
+            instances = obfuscator.search_instances(moduleblock)  # список instance обьектов модуля
 
             nets_strs = re.findall(
                 r"(?:wire|tri|tri0|tri1|supply0|"  # список строк обьектами nets
                 r"supply1|trireg|wor|triand|"
                 r"trior|wand) +([\w :\[\]\-`]*?[,;\n)=])", moduleblock)
+
             nets_strs += re.findall(r"(?:wire|tri|tri0|tri1|supply0|"  # список строк с структурами обьектов nets
                                     r"supply1|trireg|wor|triand|"
                                     r"trior|wand) +struct[\w :\[\]\-`]*?\{[\w|\W]*?} *(\w+)[,;\n)=]", moduleblock)
@@ -129,7 +138,7 @@ def get_modules_infile(file, modules, onlymodules=True):
             for i in range(len(nets_strs)):
                 nets += re.findall(r"(\w+) *[,;\n)=]", nets_strs[i])
 
-                # выделение идентификаторов, у которпых в конце [\d:\d]
+                # выделение идентификаторов, у которых в конце [\d:\d]
                 nets += re.findall(r"(\w+) +\[[\d :\-*\w`]+] *[,;=\n]", nets_strs[i])
 
             regs = obfuscator.base_ind_search(moduleblock, ["reg"])
@@ -146,13 +155,23 @@ def get_modules_infile(file, modules, onlymodules=True):
             modules[modulename]["regs"] = regs
             modules[modulename]["instances"] = instances
 
-            # обратно записываем код в файл
-            fileopenwm = open(file, "w")
-            fileopenwm.write(filetext)
-            fileopenwm.close()
-
         # если обрабатываем список модулей
         else:
 
             # добавляем модуль в список
             modules.append(modulename)
+
+    return modules
+
+
+# ф-я возвращающая блоки текста модулей или текст конкретного модуля
+def get_module_blocks(text, modulename = None):
+
+    if modulename:
+        module_block = re.search(r"\Wmodule +" + modulename + r"[\w|\W]+?endmodule", text)
+        if module_block:
+            return module_block[0]
+        else:
+            return []
+    else:
+        return re.findall(r"\Wmodule +[\w|\W]+?endmodule", text)

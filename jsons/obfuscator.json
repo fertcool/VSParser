@@ -1,17 +1,17 @@
 {
   "tasks":
           {
-             "a":true,
+             "a":false,
              "b":false,
              "c":false,
-             "d":false
+             "d":true
           },
    "conf":
           {
             "allfiles": true,
             "filename": "checkmodules.sv"
           },
-  "literalclass": "instance",
+  "literalclass": "wire",
 
-  "module": "hdmi"
+  "module": "scr1_tapc_shift_reg"
 }
