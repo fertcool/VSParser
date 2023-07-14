@@ -12,6 +12,7 @@ import work_with_files
 
 json_file = open(r"jsons/read_hierarchy.json", "r")
 json_struct = json.load(json_file)  # json словарь
+json_file.close()
 
 files = work_with_files.get_sv_files(os.curdir)  # sv файлы всего проекта
 
@@ -303,8 +304,8 @@ def get_insts_in_modules():
             for module in modules:
 
                 # поиск
-                searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", moduleblock)
-                searched_instance += re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", moduleblock)
+                searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]*?\) *;", moduleblock)
+                searched_instance += re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]*?\)[ \n]*(\w+)[ \n]*\([\w|\W]*?\) *;", moduleblock)
 
                 # добавление в список с типом в круглых скобках
                 if searched_instance:

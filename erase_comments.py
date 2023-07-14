@@ -11,6 +11,7 @@ import work_with_files
 def launch():
     json_file = open(r"jsons/erase_comments.json", "r")
     json_struct = json.load(json_file)
+    json_file.close()
 
     # удаление комментариев вида // и /**/
     if json_struct["tasks"]["a"]:

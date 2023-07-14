@@ -30,6 +30,7 @@ import work_with_files
 def launch():
     json_file = open(r"jsons/obfuscator.json", "r")
     json_struct = json.load(json_file)
+    json_file.close()
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:
@@ -445,8 +446,6 @@ def allind_search_and_replace(file):
 
     inv_decrypt_table = {v: k for k, v in decrypt_table.items()}  # перевернутая таблица соответствия
 
-
-
     # дешифруем instance блоки (перед шифрацией instance блоков в других файлах,
     # т.к. они могут быть в самом файле с описанием модулей,
     # и соответственно в самом файле тоже нажо поменять порты и названия instance обьектов)
@@ -499,9 +498,9 @@ def change_instances_ports_allf(modules, decr_table):
 
             # находим все instance обьекты (их текст)
             # instances = search_instance_blocks(filetext)
-            instances = re.findall(r"(?<!module)[ \n]+(" + module + r"[ \n]+\w+[ \n]*\([\w|\W]+?\) *;)", filetext)
+            instances = re.findall(r"(?<!module)[ \n]+(" + module + r"[ \n]+\w+[ \n]*\([\w|\W]*?\) *;)", filetext)
             instances += re.findall(
-                r"(?<!module)[ \n]+(" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*\w+[ \n]*\([\w|\W]+?\) *;)", filetext)
+                r"(?<!module)[ \n]+(" + module + r"[ \n]+#\([\w|\W]*?\)[ \n]*\w+[ \n]*\([\w|\W]*?\) *;)", filetext)
 
             # если такие обьекты существуют, то обрабатываем их
             if instances:
@@ -518,7 +517,7 @@ def change_instances_ports_allf(modules, decr_table):
                     # цикл замены названия портов на соответствующие в таблице decr_table
                     for inout in inouts:
                         if inout in decr_table:
-                            instance = re.sub(r"\."+inout, decr_table[inout], instance)
+                            instance = re.sub(r"\."+inout, "."+ decr_table[inout], instance)
 
                             # добавляем в таблицу decrypt_table_instances соответствующую замену из decr_table
                             decrypt_table_instances[decr_table[inout]] = inout
@@ -627,9 +626,9 @@ def search_instances(text):
     for module in modules:
 
         # поиск
-        searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", text)
+        searched_instance = re.findall(r"(?<!module)[ \n]+" + module + r"[ \n]+(\w+)[ \n]*\([\w|\W]*?\) *;", text)
         searched_instance += re.findall(
-            r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", text)
+            r"(?<!module)[ \n]+" + module + r"[ \n]+#\([\w|\W]*?\)[ \n]*(\w+)[ \n]*\([\w|\W]*?\) *;", text)
 
         # добавление в список
         if searched_instance:
@@ -653,9 +652,9 @@ def search_instance_blocks(text):
     for module in modules:
 
         # поиск
-        searched_instance = re.findall(r"(?<!module)[ \n]+(" + module + r"[ \n]+\w+[ \n]*\([\w|\W]+?\) *;)", text)
+        searched_instance = re.findall(r"(?<!module)[ \n]+(" + module + r"[ \n]+\w+[ \n]*\([\w|\W]*?\) *;)", text)
         searched_instance += re.findall(
-            r"(?<!module)[ \n]+(" + module + r"[ \n]+#\([\w|\W]+?\)[ \n]*\w+[ \n]*\([\w|\W]+?\) *;)", text)
+            r"(?<!module)[ \n]+(" + module + r"[ \n]+#\([\w|\W]*?\)[ \n]*\w+[ \n]*\([\w|\W]*?\) *;)", text)
 
         # добавление в список
         if searched_instance:
@@ -744,6 +743,7 @@ def preobfuscator_ifdef(file):
     # нужен для включения доп. списка include
     json_file_ifdef = open("jsons/ifdefprocessing.json", "r")
     json_ifdef_struct = json.load(json_file_ifdef)
+    json_file_ifdef.close()
 
     # включаем все include файлы
     ifdefprocessing.include_for_file(file, json_ifdef_struct)
@@ -779,31 +779,7 @@ def preobfuscator_instance(file):
         # замена в тексте
         filetext = filetext.replace(inst_block, rand_string)
 
-    # # цикл поиска и шиврования блоков instance
-    # for module in modules:
-    #
-    #     # поиск
-    #     # searched_instances = search_instance_blocks(filetext)
-    #     searched_instances = re.findall(module + r"[ \n]+(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
-    #     searched_instances += re.findall(module + r"[ \n]+#\([\w|\W]+?\)[ \n]*(\w+)[ \n]*\([\w|\W]+?\) *;", filetext)
-    #
-    #     # если нашли, то заменяем все блоки
-    #     if searched_instances:
-    #
-    #         # замена блоков
-    #         for instance_block in searched_instances:
-    #             letters_and_digits = string.ascii_letters + string.digits
-    #             rand_string = ''.join(random.sample(letters_and_digits, 40))  # создание случайной строки
-    #
-    #             # сохраняем замену в таблице соответствия
-    #             decrypt_table[rand_string] = instance_block
-    #
-    #             # замена в тексте
-    #             filetext = filetext.replace(instance_block, rand_string)
-    #
-    #     # если не нашли, то продолжаем поиск
-    #     else:
-    #         continue
+
 
     # запись зашиврованного текста
     work_with_files.write_text_to_file(file, filetext)

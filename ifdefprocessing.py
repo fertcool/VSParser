@@ -14,6 +14,7 @@ import erase_comments
 def launch():
     json_file = open(r"jsons/ifdefprocessing.json", "r")
     json_struct = json.load(json_file)
+    json_file.close()
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:

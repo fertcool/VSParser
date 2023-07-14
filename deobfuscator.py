@@ -17,6 +17,7 @@ allfiles = work_with_files.get_sv_files(os.curdir)  # добавляем фай�
 def launch():
     json_file = open(r"jsons/deobfuscator.json", "r")
     json_struct = json.load(json_file)
+    json_file.close()
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:
