@@ -72,6 +72,9 @@ def splitting_modules_by_files():
 
         filetext = work_with_files.get_file_text(file)  # текст файла
 
+        # убираем теккст после endmodule (чтобы этот текст не появлялся в будущих файлах)
+        filetext = re.sub(r"endmodule *: *\w+", r"endmodule", filetext)
+
         # список полных текстов блоков модулей файла
         moduleblocks = work_with_files.get_module_blocks(filetext)
 
@@ -91,6 +94,9 @@ def splitting_modules_by_files():
                         continue
                     else:
                         filetext_with_cur_module = filetext_with_cur_module.replace(moduleblock_another, '')
+
+                # удаялем лишние отступы
+                filetext_with_cur_module = work_with_files.delete_indents(filetext_with_cur_module)
 
                 # саздаем новый файл с отдельным модулем и вписываем туда основной код файла и текст модуля
                 work_with_files.write_text_to_file(re.sub(r"[\w\.]+$", modulename, file) + ".sv",

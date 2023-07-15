@@ -6,25 +6,31 @@ json_file = open(r"jsons/base.json", "r")
 json_struct = json.load(json_file)
 json_file.close()
 
-import erase_comments
+
 if json_struct["tasks"]["1"]:
+    import erase_comments
     erase_comments.launch()
 
-import ifdefprocessing
+
 if json_struct["tasks"]["2"]:
+    import ifdefprocessing
     ifdefprocessing.launch()
 
-import obfuscator
+
 if json_struct["tasks"]["3"]:
+    import obfuscator
     obfuscator.launch()
 
-import deobfuscator
+
 if json_struct["tasks"]["4"]:
+    import deobfuscator
     deobfuscator.launch()
 
-import read_hierarchy
+
 if json_struct["tasks"]["5"]:
+    import read_hierarchy
     read_hierarchy.launch()
+
 # check_i.launch()
 
 print("Done!")

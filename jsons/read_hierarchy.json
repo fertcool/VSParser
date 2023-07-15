@@ -1,9 +1,9 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":true,
-             "c":false
+             "a":false,
+             "b":false,
+             "c":true
 
           },
 

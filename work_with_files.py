@@ -32,6 +32,15 @@ def add_text_to_file(text, file):
     fileopen.close()
 
 
+# ф-я удаления лишних отступов
+def delete_indents(text):
+    # убираем лишние отступы
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"( \n)\1+", "\n", text)
+
+    return text
+
+
 # ------------------------------ФУНКЦИИ_ПОИСКА_ФАЙЛОВ_SV------------------------------ #
 # ф-я поиска всех sv файлов (путей у них) в директории и поддиректориях
 def scan_svfiles(dir, svfiles):

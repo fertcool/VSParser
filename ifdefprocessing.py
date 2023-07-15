@@ -145,8 +145,8 @@ def ifdef_pr_forfile(file, json):
 
             filetext = filetext.replace(ifdef, newifdef)
 
-    # убираем лишние отступы
-    filetext = re.sub(r"\n{3,}", "\n\n", filetext)
+    # удаялем лишние отступы
+    filetext = work_with_files.delete_indents(filetext)
 
     # запись в файл кода без лишних блоков ifdef/ifndef
     work_with_files.write_text_to_file(file, filetext)

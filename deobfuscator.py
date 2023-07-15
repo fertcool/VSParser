@@ -98,6 +98,9 @@ def decrypt_one_ind(file, ind):
             # поиск всех строк с идентификаторами класса ind
             allind = obfuscator.base_ind_search(filetext, [ind])
 
+            if ind == "wire":  # добавляем структуры wire
+                allind += re.findall(r"wire +struct[\w :\[\]\-`]*?\{[\w|\W]*?} *(\w+)[,;\n)=]", filetext)
+
             # удаление из списка allind найденных input/output/inout идентификаторов
             obfuscator.delete_inouts(inouts, allind)
 
@@ -145,7 +148,7 @@ def decrypt_module_inout(file, module):
     # если нашли модуль
     if moduleblock:
 
-        moduletext = moduleblock[0]  # текст блока модуля
+        moduletext = moduleblock  # текст блока модуля
 
         inouts = obfuscator.search_inouts(moduletext)
 

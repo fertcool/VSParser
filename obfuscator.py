@@ -517,7 +517,8 @@ def change_instances_ports_allf(modules, decr_table):
                     # цикл замены названия портов на соответствующие в таблице decr_table
                     for inout in inouts:
                         if inout in decr_table:
-                            instance = re.sub(r"\."+inout, "."+ decr_table[inout], instance)
+                            port = re.search(r"\."+inout+r"\W", instance)[0]
+                            instance = instance.replace(port, "." + decr_table[inout] + port[-1])
 
                             # добавляем в таблицу decrypt_table_instances соответствующую замену из decr_table
                             decrypt_table_instances[decr_table[inout]] = inout
