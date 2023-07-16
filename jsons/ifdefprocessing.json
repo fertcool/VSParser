@@ -1,8 +1,8 @@
 {
   "tasks":
           {
-             "a":true,
-             "b":true
+             "IncludePr":true,
+             "IfdefPr":true
           },
    "conf":
           {

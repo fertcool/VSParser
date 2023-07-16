@@ -1,12 +1,13 @@
 # СКРИПТ ДЕШИВРОВКИ ФАЙЛОВ ПОСЛЕ ОБФУСКАЦИИ
 # настройка конфигурации осуществляется в "deobfuscator.json"
 
+import ast
 import json
 import os
-import ast
 import re
-import work_with_files
+
 import obfuscator
+import work_with_files
 
 allfiles = work_with_files.get_sv_files(os.curdir)  # добавляем файлы всего проекта
 
@@ -25,8 +26,8 @@ def launch():
     else:
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
-    # восстановление обфусцированного кода по таблицам соответствия
-    if json_struct["tasks"]["a"]:
+    # восстановление всего обфусцированного кода по таблицам соответствия
+    if json_struct["tasks"]["AllDeobf"]:
 
         # цикл по всем файлам
         for file in files:
@@ -34,14 +35,14 @@ def launch():
 
     #  Частично восстановить исходный код из обфусцированного только для выбранного класса
     #  идентификаторов (input/output/inout, wire, reg, module, instance, parameter).
-    if json_struct["tasks"]["b"]:
+    if json_struct["tasks"]["IndDeobf"]:
 
         # цикл по всем файлам
         for file in files:
             decrypt_one_ind(file, json_struct["literalclass"])
 
     # Частично восстановить исходный код из обфусцированного только для портов ввода вывода заданного модуля
-    if json_struct["tasks"]["c"]:
+    if json_struct["tasks"]["ModuleInoutsDeobf"]:
 
         # цикл по всем файлам
         for file in files:
@@ -55,7 +56,7 @@ def decryptall(file):
 
     filetext = work_with_files.get_file_text(file)  # текст файла
 
-    # ищем все порты и параметры модулей в файле, чтобы далее расшиaвровать их во всех файлах
+    # ищем все порты и параметры модулей в файле, чтобы далее расшифровать их во всех файлах
     ports = obfuscator.base_ind_search(filetext, ["input", "output", "inout", "parameter"])
 
     modules = work_with_files.get_modules(filetext)  # список модулей, описанных в тексте файла
@@ -67,7 +68,7 @@ def decryptall(file):
     for ident in decrypt_table:
         filetext = re.sub(ident, decrypt_table[ident], filetext)
 
-    # расшифвровываем порты, имена модулей, параметры во всех файлах
+    # расшифвровываем порты, имена модулей, параметры во всех файлах проекта
     change_ind_allf(modules+ports)
 
     # запись нового текста в файл
@@ -143,6 +144,7 @@ def decrypt_module_inout(file, module):
 
     decrypt_table = get_decrt_in_file(file)  # таблица соответствия
 
+    # ищем текст модуля
     moduleblock = work_with_files.get_module_blocks(filetext, module)
 
     # если нашли модуль
@@ -150,6 +152,7 @@ def decrypt_module_inout(file, module):
 
         moduletext = moduleblock  # текст блока модуля
 
+        # ищем порты модуля
         inouts = obfuscator.search_inouts(moduletext)
 
         # замена выбранного класса идентификаторов
@@ -200,7 +203,7 @@ def get_decrt_in_file(file):
         return {}
 
 
-# ф-я дешифрации некотрых идентификаторов во всех файлах проекта
+# ф-я дешифрации некоторых идентификаторов во всех файлах проекта
 def change_ind_allf(identifiers):
 
     for file in allfiles:

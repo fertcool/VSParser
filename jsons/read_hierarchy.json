@@ -1,9 +1,9 @@
 {
   "tasks":
           {
-             "a":false,
-             "b":false,
-             "c":true
+             "CallStructure":true,
+             "AllObjects":true,
+             "SplittingModules":true
 
           },
 

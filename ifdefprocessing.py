@@ -4,8 +4,9 @@
 import json
 import os
 import re
-import work_with_files
+
 import erase_comments
+import work_with_files
 
 
 # ------------------------------ЗАПУСК_СКРИПТА------------------------------ #
@@ -23,14 +24,14 @@ def launch():
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
     # добавление include файлов
-    if json_struct["tasks"]["a"]:
+    if json_struct["tasks"]["IncludePr"]:
 
         # цикл по всем файлам
         for file in files:
             include_for_file(file, json_struct)
 
     # обработка ifdef/ifndef
-    if json_struct["tasks"]["b"]:
+    if json_struct["tasks"]["IfdefPr"]:
 
         # цикл по всем файлам
         for file in files:
@@ -97,7 +98,7 @@ def addincludes(json, filetext, included = None):
 # ф-я добавления всех include файлов для 1 файла
 def include_for_file(file, json):
 
-    filetext = work_with_files.get_file_text(file)
+    filetext = work_with_files.get_file_text(file)  # текст файла
 
     # изменяем текст sv файла - заменяем `include на текст соответствующего файла
     filetext = addincludes(json, filetext)
@@ -143,6 +144,7 @@ def ifdef_pr_forfile(file, json):
             # обработка блока
             newifdef = ifblockprocessing(ifdef, defines)
 
+            # записываем обработанный текст в файл
             filetext = filetext.replace(ifdef, newifdef)
 
     # удаялем лишние отступы

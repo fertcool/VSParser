@@ -1,33 +1,31 @@
 import json
-import check_i
-
 
 json_file = open(r"jsons/base.json", "r")
-json_struct = json.load(json_file)
+json_struct = json.load(json_file)  # словарь json
 json_file.close()
 
-
-if json_struct["tasks"]["1"]:
+# запуск скрипта удаления комментариев
+if json_struct["tasks"]["EraseComments"]:
     import erase_comments
     erase_comments.launch()
 
-
-if json_struct["tasks"]["2"]:
+# запуск скрипта ifdef обработки
+if json_struct["tasks"]["IfdefPr"]:
     import ifdefprocessing
     ifdefprocessing.launch()
 
-
-if json_struct["tasks"]["3"]:
+# запуск скрипта обфускации
+if json_struct["tasks"]["Obf"]:
     import obfuscator
     obfuscator.launch()
 
-
-if json_struct["tasks"]["4"]:
+# запуск скрипта деобфускации
+if json_struct["tasks"]["Deobf"]:
     import deobfuscator
     deobfuscator.launch()
 
-
-if json_struct["tasks"]["5"]:
+# запуск скрипта чтения иерархии проекта
+if json_struct["tasks"]["ReadHierarchy"]:
     import read_hierarchy
     read_hierarchy.launch()
 

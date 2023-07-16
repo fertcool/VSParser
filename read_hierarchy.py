@@ -5,6 +5,7 @@ import json
 import os
 import re
 from queue import Queue
+
 import obfuscator
 import work_with_files
 
@@ -28,15 +29,15 @@ modules = work_with_files.get_all_modules()  # все модули
 # запуск чтения иерархии
 def launch():
     # восстановление структуры вызовов модулей
-    if json_struct["tasks"]["a"]:
+    if json_struct["tasks"]["CallStructure"]:
         restoring_call_structure()
 
     # поиск иерархических путей ко всем обьектам модулей
-    if json_struct["tasks"]["b"]:
+    if json_struct["tasks"]["AllObjects"]:
         search_allmodule_objects()
 
     # разделение файлов с несколькими модулями
-    if json_struct["tasks"]["c"]:
+    if json_struct["tasks"]["SplittingModules"]:
         splitting_modules_by_files()
 
 
@@ -120,7 +121,7 @@ def get_roots_modules(inst_in_modules_dict):
         # если список instance обьектов модуля не пуст - то проверяем его
         if inst_in_modules_dict[module]:
 
-            # флаг - нет ли на instance обьект ссылки, т.е. этот модуль не имеет нигле экземпляров,
+            # флаг - нет ли на instance обьект ссылки, т.е. этот модуль не имеет нигде экземпляров,
             # т.е. это флаг корневого модуля
             no_link_flag = True
 

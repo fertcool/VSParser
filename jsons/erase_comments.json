@@ -1,10 +1,10 @@
 {
   "tasks":
           {
-            "a":true,
-            "b":false,
-            "c":false,
-            "d":false
+            "BaseErase":false,
+            "NotAsciiErase":false,
+            "MinusErase":false,
+            "PlusErase":true
           },
 
   "conf":

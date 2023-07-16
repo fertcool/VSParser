@@ -2,8 +2,10 @@
 # переводит обфксцированные обьекты в файле отчета (report.txt) в обычные
 import os
 import re
+
 import deobfuscator
 import work_with_files
+
 files = work_with_files.get_sv_files(os.curdir)
 tables = []
 

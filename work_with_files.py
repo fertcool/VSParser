@@ -2,6 +2,7 @@
 
 import os
 import re
+
 import obfuscator
 
 
@@ -50,9 +51,6 @@ def scan_svfiles(dir, svfiles):
     # сканирование файлов
     with os.scandir(dir) as files:
         for file in files:
-
-            # добавление файла или папки в список
-            # dirfiles.append(dir + "\\" + file.name)
 
             # добавление файла sv в список
             if file.name.endswith(".sv"):
@@ -104,7 +102,7 @@ def get_all_modules(onlymodules = True):
     return modules
 
 
-# ф-я поиска либо словаря модулей либо списка модулей в 1 файле
+# ф-я поиска либо словаря модулей либо списка модулей в тексте
 def get_modules(text, onlymodules=True):
 
     # если флаг onlymodules = false то работаем со словарем

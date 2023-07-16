@@ -1,8 +1,9 @@
 # СКРИПТ РАБОТЫ С УДАЛЕНИЕМ КОММЕНТАРИЕВ
 # настройка конфигурации осуществляется в "erase_comments.json"
+import json
 import os
 import re
-import json
+
 import work_with_files
 
 
@@ -14,22 +15,22 @@ def launch():
     json_file.close()
 
     # удаление комментариев вида // и /**/
-    if json_struct["tasks"]["a"]:
+    if json_struct["tasks"]["BaseErase"]:
         BasePatterns = ["/\*[\s|\S]*?\*/", "//[^\n]*\n"]
         deletecomments(json_struct, BasePatterns)
 
-    #удаление комментариев без основных ascii символов
-    if json_struct["tasks"]["b"]:
+    # удаление комментариев без основных ascii символов
+    if json_struct["tasks"]["NotAsciiErase"]:
         asciipatterns = ["/\*[ -~\n]*?\*/", "//[ -~]*\n"]
         deletecomments(json_struct, asciipatterns, True)
 
     # удаление комментариев по minus списку
-    if json_struct["tasks"]["c"]:
+    if json_struct["tasks"]["MinusErase"]:
         minus = json_struct["minus"]
         deletecomments(json_struct, minus)
 
     # удаление комментариев по plus списку
-    if json_struct["tasks"]["d"]:
+    if json_struct["tasks"]["PlusErase"]:
         deletecomments(json_struct, json_struct["plus"], True)
 
 
@@ -88,7 +89,6 @@ def delete(svfile, patterns, plus):
         # ищем удаляемые комментарии
         for pattern in patterns:
             if re.findall(pattern, svtext):
-                # print(re.findall(pattern, svtext))
 
                 # удаляем комментарий, совпавший с шаблоном
                 svtext = re.sub(pattern, '\n', svtext)

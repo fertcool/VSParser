@@ -13,13 +13,14 @@
 # enum / typedef
 # `define
 # обфускация не производится над вызовами instance обьектов через "."
-
+# если обфусцируются модули или их порты, параметры, то они заменяются и у instance экземпляров проекта
 
 import json
 import os
 import random
 import re
 import string
+
 import erase_comments
 import ifdefprocessing
 import work_with_files
@@ -39,28 +40,28 @@ def launch():
         files.append(json_struct["conf"]["filename"])  # добавляем 1 необходимый файл
 
     # обфускация по всем идентификаторам
-    if json_struct["tasks"]["a"]:
+    if json_struct["tasks"]["AllObf"]:
 
         # цикл по всем файлам
         for file in files:
             allind_search_and_replace(file)
 
     # обфускация по выбранному классу идентификаторов (input/output/inout, wire, reg, module, instance, parameter)
-    if json_struct["tasks"]["b"]:
+    if json_struct["tasks"]["IndObf"]:
 
         # цикл по всем файлам
         for file in files:
             ind_search_and_replace(file, json_struct["literalclass"])
 
     # обфускация по идентификаторам input/output/inout в заданном модуле
-    if json_struct["tasks"]["c"]:
+    if json_struct["tasks"]["ModuleWoInoutsObf"]:
 
         # цикл по всем файлам
         for file in files:
             module_search_and_replace_wo_inout(file, json_struct["module"])
 
     # обфускация в рамках (protect on - protect off)
-    if json_struct["tasks"]["d"]:
+    if json_struct["tasks"]["ProtectObf"]:
 
         # цикл по всем файлам
         for file in files:
@@ -127,9 +128,6 @@ def module_search_and_replace_wo_inout(file, module):
         # шифруем блоки instance, чтобы они не участвовали далее в обрвботке
         decrypt_table_instances = preobfuscator_instance(file)  # таблица дешифрации блоков instance
 
-        # # запись модуля в текст (на замену старому коду будет только обрабатываемый модуль)
-        # work_with_files.write_text_to_file(file, moduletext)
-
         filetext = work_with_files.get_file_text(file)  # текст файла после шифровки instance обьектов
         newmoduletext = work_with_files.get_module_blocks(filetext, module)  # текст модуля после
         # шифровки instance обьектов
@@ -164,11 +162,11 @@ def module_search_and_replace_wo_inout(file, module):
             for i in range(len(base_typedef)):
                 base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных идентификаторов в base
 
-        # поиск идентификаторов функций
-        func_ind = re.findall(r"\W(?:function|task)[ \n]*?(\w+)[ \n]*?(?:\(|#\(|;)", newmoduletext)
+        # поиск идентификаторов модулей и функций
+        funcs = re.findall(r"(?:task|function) +[\w|\W]+?(\w+)[ \n]*(?:\(|#\(|;)", filetext)
 
         # все идентификаторы (без повторов)
-        allind = set(defines + base + enums + structs + typedefs + func_ind + instances)  # все идентификаторы
+        allind = set(defines + base + enums + structs + typedefs + funcs + instances)
 
         # удаление из списка allind найденных input/output/inout идентификаторов
         delete_inouts(inouts, allind)
@@ -352,11 +350,6 @@ def ind_search_and_replace(file, ind):
         # создаем файл с таблицей соответствия
         write_decrt_in_file(file, decrypt_table)
 
-        # filetext = work_with_files.get_file_text(file)  # текст файла
-        #
-        # # запись обфусцированного текста
-        # work_with_files.write_text_to_file(file, filetext)
-
     # замена instance идентификаторов
     elif ind == "instance":
 
@@ -389,8 +382,7 @@ def allind_search_and_replace(file):
 
     # обработка ifdef/ifndef
     preobfuscator_ifdef(file)
-    if file ==".\\scr1-master\\src\\core\\primitives\\scr1_reset_cells.sv":
-        print(':')
+
     filetext = work_with_files.get_file_text(file)  # текст файла
 
     # instance идентификаторы (имена)
@@ -433,10 +425,10 @@ def allind_search_and_replace(file):
             base += re.findall(r"(\w+) *[,;\n)=]", base_typedef[i])  # добавление найденных идентификаторов в base
 
     # поиск идентификаторов модулей и функций
-    ModuleClusses = re.findall(r"\W(?:module|task|function)[ \n]*?(\w+)[ \n]*?(?:\(|#\(|;)", filetext)
+    funcs = re.findall(r"(?:task|function) +[\w|\W]+?(\w+)[ \n]*(?:\(|#\(|;)", filetext)
 
     # все идентификаторы (без повторов)
-    allind = set(defines + base + enums + structs + typedefs + ModuleClusses + instances)  # все идентификаторы
+    allind = set(defines + base + enums + structs + typedefs + modules + funcs + instances)  # все идентификаторы
 
     # шифровка идентификаторов и создание таблицы соответствия
     decrypt_table = {}
@@ -555,6 +547,7 @@ def encrypt_text(allind, filetext, decrypt_table):
 
         decrypt_table[rand_string] = ind  # добавляем в таблицу новое соответствие новому идентификатору
 
+        # запись в текст нового идентификатора
         filetext = change_ind(filetext, ind, rand_string)
 
     return filetext
@@ -585,9 +578,9 @@ def change_ind(text, ind, newind):
     # цикл замены каждого совпадения на случайную строку
     for indef in indefic:
         first = indef[0]  # несловесный символ слева от совпадения
-        last = indef[-1]  # несловесный справа слева от совпадения
+        last = indef[-1]  # несловесный справа от совпадения
 
-        # заменяем некоторые симвылы для правильной задачи регулярного выражения
+        # заменяем некоторые символы для правильной задачи регулярного выражения
         indef = regexp_to_str(indef)
 
         # замена совпадения на случайную строку
@@ -719,7 +712,7 @@ def enum_ind_search(text):
 
     # цикл обработки enums (выделения идентификаторов из текстов enums)
     for i in range(len(enumblocks)):
-        insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # текст внтури блока без присваиваний
+        insideWOeq = re.sub(r"=[ \w']+", '', enumblocks[i][0])  # текст внутри блока без присваиваний
         insideind = re.findall(r"(\w+) *", insideWOeq)  # список идентификаторов внутри блока
         outsideind = re.findall(r"(\w+) *",
                                 enumblocks[i][1])  # список идентификаторов снаружи блока (объекты enum)
@@ -779,8 +772,6 @@ def preobfuscator_instance(file):
 
         # замена в тексте
         filetext = filetext.replace(inst_block, rand_string)
-
-
 
     # запись зашиврованного текста
     work_with_files.write_text_to_file(file, filetext)
