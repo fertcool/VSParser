@@ -1,16 +1,16 @@
 {
   "tasks":
           {
-            "BaseErase":false,
+            "BaseErase":true,
             "NotAsciiErase":false,
             "MinusErase":false,
-            "PlusErase":true
+            "PlusErase":false
           },
 
   "conf":
   {
     "allfiles": true,
-    "filename": "eee.txt"
+    "filename": "test.txt"
   },
 
   "minus":

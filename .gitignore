@@ -1,5 +1,7 @@
 /venv/
 /.idea/
 /example.txt/
-/h.sv/
+/h.svss/
 /scr1-master/
+/hdmi-master/
+/jsons/

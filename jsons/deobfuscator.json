@@ -9,9 +9,9 @@
   "conf":
           {
             "allfiles": true,
-            "filename": "C:\\Users\\fertc\\PycharmProjects\\VSParser\\scr1-master\\src\\core\\scr1_tapc_shift_reg.sv"
+            "filename": "C:\\Users\\fertc\\PycharmProjects\\VSParser\\hdmi-master\\test\\top_tb\\pll.sv"
           },
-  "literalclass": "wire",
+  "literalclass": "module",
 
-  "module": "rsc2lNZOfPIKjCUo7L1Axm4u3M0"
+  "module": "4Ru1QYFln6MZaKd5N2eHOfAyL8gbh"
 }

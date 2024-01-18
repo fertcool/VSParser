@@ -1,13 +1,13 @@
 {
   "tasks":
           {
-             "IncludePr":true,
+             "IncludePr":false,
              "IfdefPr":true
           },
    "conf":
           {
-            "allfiles": false,
-            "filename": "C:\\Users\\fertc\\PycharmProjects\\VSParser\\scr1-master\\src\\tb\\scr1_memory_tb_ahb.sv"
+            "allfiles": true,
+            "filename": "ifdef.sv"
           },
   "includes":
           [

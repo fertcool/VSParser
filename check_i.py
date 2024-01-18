@@ -3,10 +3,10 @@
 import os
 import re
 
-import deobfuscator
-import work_with_files
+import obfuscator.deobfuscator
+from work_with_files import *
 
-files = work_with_files.get_sv_files(os.curdir)
+files = get_sv_files(os.curdir)
 tables = []
 
 
@@ -49,7 +49,7 @@ def launch():
 
 
     for table in tables:
-        table_struct = deobfuscator.get_decrt_in_file(table.replace("_decrypt_table.txt", ".sv"))
+        table_struct = obfuscator.deobfuscator.get_decrt_in_file(table.replace("_decrypt_table.txt", ".sv"))
 
         for id in table_struct:
 
