@@ -3,14 +3,16 @@
 
 from obfuscator.deobfuscator.base_funcs import *
 
-allfiles = get_sv_files(os.curdir)  # добавляем файлы всего проекта
+allfiles = []
 
 # ------------------------------ЗАПУСК_ДЕОБФУСКАЦИИ------------------------------ #
 
 
 # запуск деобфускации
 def launch():
+    global allfiles
     json_struct = get_json_struct(r"jsons/deobfuscator.json")
+    allfiles = get_sv_files(os.curdir)  # добавляем файлы всего проекта
 
     files = []  # список файлов для которых проводится работа
     if json_struct["conf"]["allfiles"]:

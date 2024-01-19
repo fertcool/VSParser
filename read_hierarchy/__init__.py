@@ -3,23 +3,27 @@
 import obfuscator
 from read_hierarchy.base_funcs import *
 
-# ------------------------------ИНИЦИАЛИЗАЦИЯ_ГЛОБАЛЬНЫХ_ПЕРЕМЕННЫХ------------------------------ #
+# ------------------------------ОПРЕДЕЛЕНИЕ_ГЛОБАЛЬНЫХ_ПЕРЕМЕННЫХ------------------------------ #
 
 json_struct = get_json_struct(r"jsons/read_hierarchy.json")
-
-files = get_sv_files(os.curdir)  # sv файлы всего проекта
-
-# ifdef/ifndef обработка всех фалйов
-for file_g in files:
-    obfuscator.preobfuscator_ifdef(file_g)
-
-modules = get_all_modules()  # все модули
+files = []  # sv файлы всего проекта
+modules = []  # все модули
 
 
 # ------------------------------ЗАПУСК_ЧТЕНИЯ_ИЕРАРХИИ------------------------------ #
 
 # запуск чтения иерархии
 def launch():
+    global files, modules
+    # инициализация глобальных переменных
+    files = get_sv_files(os.curdir)  # sv файлы всего проекта
+
+    # ifdef/ifndef обработка всех фалйов
+    for file_g in files:
+        obfuscator.preobfuscator_ifdef(file_g)
+
+    modules = get_all_modules()  # все модули
+
     # восстановление структуры вызовов модулей
     if json_struct["tasks"]["CallStructure"]:
         restoring_call_structure()

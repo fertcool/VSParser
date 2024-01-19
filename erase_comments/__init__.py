@@ -1,8 +1,6 @@
 # СКРИПТ РАБОТЫ С УДАЛЕНИЕМ КОММЕНТАРИЕВ
 # настройка конфигурации осуществляется в "erase_comments.json"
 
-
-from work_with_files import *
 from erase_comments.base_funcs import *
 # ------------------------------ЗАПУСК_УДАЛЕНИЯ------------------------------ #
 json_struct = get_json_struct(r"jsons/erase_comments.json")
