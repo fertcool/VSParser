@@ -27,6 +27,6 @@ if __name__ == "__main__":
     if json_struct["tasks"]["ReadHierarchy"]:
         read_hierarchy.launch()
 
-    check_i.launch()
+    # check_i.launch()
 
     print("Done!")
