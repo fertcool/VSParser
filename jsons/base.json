@@ -1,9 +1,9 @@
 {
   "tasks": {
     "EraseComments": false,
-    "IfdefPr": false,
+    "IfdefPr": true,
     "Obf": false,
     "Deobf": false,
-    "ReadHierarchy": true
+    "ReadHierarchy": false
   }
 }

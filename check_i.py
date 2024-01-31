@@ -19,11 +19,11 @@ def scan_tables(dir, svfiles):
         for file in files:
 
             # добавление файла или папки в список
-            # dirfiles.append(dir + "\\" + file.name)
+            # dirfiles.append(dir + "/" + file.name)
 
             # добавление файла sv в список
             if file.name.endswith("table.txt"):
-                svfiles.append(dir + "\\" + file.name)
+                svfiles.append(os.path.join(dir, file.name))
 
             # добавление подкаталогов(папок) с список
             if file.is_dir():
@@ -31,7 +31,7 @@ def scan_tables(dir, svfiles):
 
     # идем дальше по всем папкам в текущей дериктории
     for path in dirpathes:
-        scan_tables(dir + "\\" + path, svfiles)
+        scan_tables(os.path.join(dir, path), svfiles)
 
 
 def launch():

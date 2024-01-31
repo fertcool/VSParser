@@ -5,3 +5,6 @@
 /scr1-master/
 /hdmi-master/
 /jsons/
+/__pycache__/
+/.vscode/
+*__pycache__*

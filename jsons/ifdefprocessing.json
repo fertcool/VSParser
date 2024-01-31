@@ -6,12 +6,12 @@
           },
    "conf":
           {
-            "allfiles": true,
+            "allfiles": false,
             "filename": "ifdef.sv"
           },
   "includes":
           [
-            ".\\scr1-master\\src\\includes"
+            "./scr1-master/src/includes"
           ],
   "defines":
           [
